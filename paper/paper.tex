@@ -1,0 +1,466 @@
+% To compile run lualatex and bibtex (fontspec requires LuaLaTeX or XeLaTeX)
+%   lualatex paper -> bibtex paper -> lualatex paper -> lualatex paper
+%
+% =====================================================================
+% Enabling Automated Controller Deployment in IoT-Enabled Building Systems with GraphRAG
+% Target: 2026 European Conference on Computing in Construction (EC3), 8 pages, two-column.
+% Adapted from paper/paper.tex to the official EC3_2026 template.
+% Citation style: Harvard author-date via natbib, apalikenonitalic.bst
+% =====================================================================
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% EC3 Latex template
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TODO change to double column
+\documentclass[10pt, A4paper]{article}
+
+\usepackage{fontspec}
+\setmainfont[
+  UprightFont    = {Times New Roman},
+  ItalicFont     = {Times New Roman Italic},
+  BoldFont       = {Times New Roman Bold},
+  BoldItalicFont = {Times New Roman Bold Italic}
+]{Times New Roman}
+% Commented out because of above
+% http://tug.ctan.org/tex-archive/macros/latex/contrib/geometry/
+\usepackage{geometry}
+\geometry{ a4paper, total={170mm,257mm}, top=25mm, left=20mm, }
+
+\usepackage{amssymb}
+\usepackage{newtxmath} % optional, for math
+\usepackage[justification=centering]{caption}
+
+\usepackage{enumitem}% To reduce separation between bullets or itemized lists
+% Use with [noitemsep]EC3_2026
+
+\usepackage{natbib}
+
+\usepackage{amsmath}
+\usepackage{epsfig}
+\usepackage{graphicx}
+\usepackage{vmargin}
+\usepackage{url}
+\usepackage{tabularx}
+\usepackage{boxedminipage}
+\usepackage{booktabs}% rules used by the manuscript tables
+
+\usepackage{newtxtext}%This package is needed for bold and Italic fonts.
+
+\usepackage{lastpage} % for the number of the last page in the document
+\usepackage{fancyhdr}
+\usepackage{soul} % for defining underline thickness
+
+% -------------------------------------------------------------------
+% Different font in captions
+\newcommand{\captionfonts}{\fontsize{9}{9}\it}
+\setlength{\abovecaptionskip}{-3pt} %% That it used for look like Word
+\setlength{\belowcaptionskip}{0pt}
+
+\makeatletter  % Allow the use of @ in command names
+\long\def\@makecaption#1#2{ %
+  \vskip\abovecaptionskip
+  \sbox\@tempboxa{{\captionfonts #1: #2}}%
+   \ifdim \wd\@tempboxa >\hsize
+	{\centering\captionfonts #1: #2\par}
+   \else
+    \hbox to\hsize{\hfil\box\@tempboxa\hfil}%
+   \fi
+  \vskip\belowcaptionskip}
+\makeatother   % Cancel the effect of \makeatletter
+% -------------------------------------------------------------------
+
+% Fuzz -------------------------------------------------------------------
+\hfuzz4pt % Don't bother to report over-full boxes if over-edge is < 2pt
+\vfuzz=\hfuzz
+
+% Line spacing -----------------------------------------------------------
+\newlength{\defbaselineskip}
+\setlength{\defbaselineskip}{\baselineskip}
+\newcommand{\setlinespacing}[1]%
+           {\setlength{\baselineskip}{#1 \defbaselineskip}}
+\newcommand{\doublespacing}{\setlength{\baselineskip}
+                           {2.0 \defbaselineskip}}
+\newcommand{\singlespacing}{\setlength{\baselineskip}{\defbaselineskip}}
+\newcommand{\onehalfspacing}{\setlength{\baselineskip}
+                           {1.5 \defbaselineskip}}
+
+\hyphenation{TRNSYS}
+
+% Page layout ------------------------------------------------------------
+\setlength{\topmargin}{0mm}%
+\setlength{\headheight}{25mm}
+\setlength{\headsep}{0mm}
+\setlength{\textwidth}{17cm}
+\setlength{\textheight}{241mm}
+\setlength{\hoffset}{-40.5mm}
+\setlength{\footskip}{12pt}
+\setlength{\parindent}{5mm}% EC3 guide: first paragraph line indented 5 mm
+\setlength{\columnsep}{8mm}
+\setcounter{secnumdepth}{-2} % headings are not numbered
+
+% Additional design for tables ------------------------------------------
+\makeatletter
+\newsavebox\saved@arstrutbox
+\newcommand*{\setarstrut}[1]{%
+	\noalign{%
+		\begingroup
+		\global\setbox\saved@arstrutbox\copy\@arstrutbox
+		\global\setbox\@arstrutbox\hbox{%
+			\vrule \@height #1
+			\@depth  0cm
+			\@width\z@
+		}%
+		\endgroup
+	}%
+}
+\newcommand*{\restorearstrut}{%
+	\noalign{%
+		\global\setbox\@arstrutbox\copy\saved@arstrutbox
+	}%
+}
+\makeatother
+\newcommand{\paddingtop}[2]{\setarstrut{#1} #2 \\ \restorearstrut}
+
+%% Spacing between columns within the table
+\setlength{\tabcolsep}{5mm}
+
+% Spacing between text and formula -------------------------------------
+\setlength{\abovedisplayshortskip}{3pt}
+\setlength{\abovedisplayskip}{3pt}
+\setlength{\belowdisplayskip}{3pt}
+\setlength{\belowdisplayshortskip}{3pt}
+
+% Set fonts for title, section and subsection headings -----------------
+\makeatletter
+\renewcommand\section{\@startsection{section}{1}{\z@}{6pt}{3pt}{\normalfont\large\bfseries}}
+\renewcommand\subsection{\@startsection{subsection}{1}{\z@}{6pt}{3pt}{\normalfont\normalsize\bfseries}}
+\renewcommand\subsubsection{\@startsection{subsubsection}{1}{\z@}{6pt}{3pt}{\normalfont\normalsize\itshape}}
+\makeatother
+
+\renewcommand\refname{}
+
+\newcommand{\authorfont}{\fontsize{11}{14}\selectfont}
+\newcommand{\titlefont}{\fontsize{12}{14}\selectfont \bf}
+\newcommand{\headerfont}{\fontsize{10}{11}\selectfont}
+\newcommand{\smallsmall}{\fontsize{3}{3}\selectfont}
+\newcommand{\tablefont}{\fontsize{9}{9}\selectfont}
+
+% -------------------------------------------------------------------------
+
+\pagestyle{empty}
+
+\bibliographystyle{apalikenonitalic}% needs apalikenonitalic.bst in workdir
+
+% Contents ----------------------------------------------------------------
+\begin{document}
+
+\fancypagestyle{empty}{
+  \vspace{5pt}
+  \fancyhf{}% Clear header/footer
+  \renewcommand{\headrulewidth}{2.25pt}
+  \renewcommand{\headsep}{13pt}
+
+  % Left logo: bottom aligned, flush left, no inner padding
+  \fancyhead[L]{%
+    \begin{tabular}[b]{@{}l@{}}
+%      \includegraphics[height=1.8cm, trim={0 0.1cm 0 0}, clip]{img/LogoJPG.JPG}
+      \includegraphics[height=1.8cm]{img/2027ec3}
+    \end{tabular}
+  }
+
+  % Center text: bottom aligned, centered
+  % TODO
+%  \fancyhead[C]{%
+%    \begin{tabular}[b]{c}
+%      2026 European Conference on Computing in Construction \\
+%      Corfu, Greece \\
+%      July 12--15, 2026
+%    \end{tabular}
+%  }
+
+  % Right logo: bottom aligned, flush right, no inner padding
+  \fancyhead[R]{%
+    \begin{tabular}[b]{@{}r@{}}
+      \includegraphics[height=1.45cm, trim={0 0.1cm 0 0}, clip]{img/EC3_LOGO_2.png}
+    \end{tabular}
+  }
+}
+
+\date{}
+\title{\vspace{-9mm} \titlefont Enabling Automated Controller Deployment in IoT-Enabled Building Systems with GraphRAG \vspace{-5.5mm}}
+\author{
+%\authorfont{Junsong Du$^1$, Rita Streblow$^1$, and Dirk Müller$^2$}\\
+%\authorfont{$^1$RWTH Aachen University, Aachen, Germany}\\
+%\authorfont{\texttt{junsong.du@eonerc.rwth-aachen.de}}\\
+\authorfont{~}\\
+\authorfont{~}\\
+\vspace{-15mm}
+}
+\maketitle
+\thispagestyle{empty}
+
+% --------------------------------------------------------
+\setul{2pt}{0.25pt}
+\section*{Abstract}
+
+Internet of Things (IoT) platforms are increasingly used to enhance building systems with real-time data and interaction capabilities.
+However, the heterogeneity of existing IoT platforms and underlying building systems forces applications like demand-based HVAC control to be re-engineered for each deployment, which is commonly referred to as the cross-platform interoperability problem.
+This paper presents a GraphRAG pipeline that automates controller deployment in IoT-enabled building systems using generated knowledge graphs (KGs).
+The pipeline prompts a large language model (LLM) to retrieve deployment-relevant context from the graph and to generate a detailed controller configuration for a given target space for a specific IoT platform.
+We validate the pipeline on two distinct IoT platforms, FIWARE and ioBroker, and compare it against two full-context LLM baselines supplied with raw metadata and with full KGs respectively.
+Deployment accuracy is measured as precision and recall against expert-authored ground truth.
+Results show that the GraphRAG pipeline outperforms both baselines, and it also enables local mid-size models (the Gemma4 family) to match the performance of a larger model (Gemini).
+
+\vspace{0.5em}
+\noindent\textbf{Keywords:} GraphRAG; knowledge graph; building automation; IoT platforms; large language models
+
+% =====================================================================
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{img/abstract}
+    \caption{Overview of the underlying problem and the proposed GraphRAG pipeline}
+    \label{fig:abstract}
+\end{figure}
+
+%\section{Introduction}
+%
+%Room-level controller deployment in IoT-enabled buildings is a configuration problem before it is a hardware problem. Once sensors, actuators, and gateways are physically installed, the remaining effort is cognitive and clerical: an engineer reads the available points, decides which control strategy they can support, and encodes that decision into the data-interface syntax of the target platform. Commissioning is a sizeable recurring expense in building projects. \citet{crowe2020building}, analysing outcomes across 1,500 North American buildings, report median commissioning costs (2020 US dollars) of USD 2.85/m$^2$ for existing buildings and USD 8.78/m$^2$ for new construction, alongside energy savings that justify the expenditure. The cost sits largely in the labour of mapping intent to concrete device and point configurations, not in the devices themselves.
+%
+%That labour scales with heterogeneity. A building may expose its data through a standards-oriented middleware such as FIWARE, whose NGSI-LD information model is designed for cross-domain interoperability \citep{bauer2022fiware}, or through a lightweight, vendor-neutral automation platform of the class that \citet{setz2021comparison} review, to which ioBroker belongs. The two ecosystems describe comparable physical reality with incompatible object models, naming conventions, and interface syntax. The consequence is that configuration logic rarely ports between platforms, and reuse is blocked at the point where it would save the most effort. \citet{fierro2020shepherding} show that even within a single building's lifecycle the digital representations (gbXML, BuildingSync, Project Haystack, and others) fail to interoperate at semantic, structural, and syntactic levels, so metadata must be continually reconstructed rather than inherited.
+%
+%The building community has responded with structure. Brick \citep{balaji2018brick}, RealEstateCore \citep{hammar2019realestatecore}, and the W3C SSN ontology \citep{compton2012ssn} provide rigorous vocabularies for asserting what a sensor is, where it sits, and what it measures. These vocabularies resolve naming ambiguity in principle. In practice, their instantiation against a real building remains a manual task, which \citet{pritoni2021metadata} describe as difficult, labour-intensive, and costly, and which \citet{qian2026brickdicl} address only partially by automating point classification. A coded ontology in a file does not, by itself, produce a running controller. What is missing is a mechanism that reads the platform as it actually is, expresses it in a form that preserves the relations a configuration depends on, and generates the configuration from that form. The obstacle is representational rather than conceptual.
+%
+%A parallel line of work automates generation using LLMs, but the dominant retrieval designs are structurally blind. Retrieval-augmented generation \citep{lewis2020retrieval} retrieves flat passages and conditions generation on them, which works when answers live in self-contained text. Controller configuration does not: it requires composing a decision across a space, its devices, their points, and a platform binding table, where the relevant facts are relational rather than lexical. Full-context prompting is a tempting alternative, but \citet{liu2024lost} show that LLM accuracy degrades when relevant information sits in the middle of a long input, so packing an entire platform into the prompt is unreliable. Graph-based retrieval \citep{edge2024local,peng2025graphragsurvey} preserves relations by construction, yet it has not been applied to the generation of deployable, platform-specific configuration artifacts.
+%
+%This paper presents a GraphRAG pipeline that automates demand-based HVAC controller deployment using knowledge graphs generated from live IoT platform metadata, and shows on two heterogeneous platforms that it outperforms full-context LLM baselines. We make three contributions. C1, supporting, is a method that generates a knowledge graph automatically from live heterogeneous IoT platform metadata, applied on FIWARE and ioBroker. C2, the load-bearing contribution, is the LLM-driven GraphRAG pipeline that retrieves task-relevant subgraphs and generates complete controller configurations. C3 is a cross-platform evaluation on FIWARE and ioBroker that measures deployment accuracy as precision and recall against expert ground truth, and shows that a mid-size model can match a larger model when grounded by the graph.
+%
+%The Related Work section reviews the four literature strands and names what each leaves open. The Problem Formulation section formalises the demand-based HVAC controller deployment task and the system architecture. The Method section details the method and answers, for each component, why a simpler alternative is insufficient. The Evaluation section specifies the evaluation: two full-context baselines, supplied with raw metadata and with the knowledge graph, are compared against the GraphRAG pipeline on two platforms, with deployment accuracy measured as precision and recall against expert ground truth. Result-dependent statements are marked with explicit placeholders until the runs complete. The Discussion and Conclusion sections discuss the findings and the limitations of the claim.
+%
+%% =====================================================================
+%\section{Related Work}
+%
+%Four strands converge on this paper, and none occupies its intersection.
+%
+%\subsection{Building automation and IoT deployment}
+%Deployment and commissioning are recognised as the labour-intensive part of building system delivery. \citet{crowe2020building} quantify commissioning as a substantial, recurring cost centre and note that controls have grown more sophisticated without the process becoming less manual. \citet{pritoni2021metadata} survey forty metadata schemas and conclude that creating, sustaining, and using semantic models is difficult, labour-intensive, and costly, with semantic gaps blocking cross-building scalability. \citet{fierro2020shepherding} trace the root cause to lifecycle fragmentation: representations produced at design, construction, and operation stages are mutually incompatible, so a usable model must be rebuilt repeatedly. On the platform side, FIWARE provides standard-based, open-source components and an NGSI-LD context model for cross-domain IoT interoperability \citep{bauer2022fiware}. Platforms of the open-source home-automation class, which \citet{setz2021comparison} compare across twenty systems and four in depth, follow a different design philosophy: lightweight, per-instance object trees defined by the operator rather than a shared standard. This strand establishes the pain but treats deployment as an organisational concern. Deployment automation therefore remains a human workflow supported by documentation, spreadsheets, and vendor tooling, and the reviewed literature documents the cost of that workflow more thoroughly than it proposes to reduce it. What it leaves open is a technical method that derives a deployable configuration from the live state of a platform rather than from documentation or human interpretation.
+%
+%\subsection{Knowledge graphs and ontologies for IoT and buildings}
+%The semantic-web community supplies the vocabulary layer. Brick \citep{balaji2018brick} defines an ontology and metadata schema for the physical, logical, and virtual assets of a building and their relations, enabling portable applications decoupled from vendor point names. RealEstateCore \citep{hammar2019realestatecore} offers a modular core-plus-extensions ontology for real-estate data that integrates BIM and IoT semantics. The SSN ontology \citep{compton2012ssn} provides the foundational stimulus-sensor-observation model for describing sensors and actuation. These resources are mature and well-governed, and this paper adopts their conceptual distinctions (space, device, point, measurement) as design guidance. The limitation is operational: the community has repeatedly documented that instantiating such a model against a specific building is manual and costly \citep{pritoni2021metadata}, and even automated assistance has targeted sub-problems such as point classification \citep{qian2026brickdicl} rather than full deployment. A second limitation is that ontology classes describe what a point is, not the concrete interface syntax by which a particular platform reads it. The consequence is a persistent gap between a standard that specifies meaning and a platform that specifies syntax, and no reviewed work closes both from live data. What this strand leaves open is the automatic derivation of a usable graph from live, non-standardised platform metadata, and the use of that graph to emit platform-specific configuration.
+%
+%\subsection{Retrieval-augmented generation}
+%RAG couples a retriever with a generator so that answers are conditioned on retrieved evidence \citep{lewis2020retrieval}. The paradigm works when the knowledge required for an answer is contained in locally coherent text. It degrades when the task is relational: a configuration decision depends on the joint state of several entities and on constraints that no single passage states. Full-context prompting is the other half of the trade-off. \citet{liu2024lost} demonstrate that models attend unevenly across long inputs and lose accuracy when the key information is placed mid-context, so supplying all platform metadata in one prompt is not a reliable substitute for retrieval. Neither design represents the graph of relations among spaces, devices, points, and strategies. Flat retrieval and full context are two responses to the same problem, and both are blind to relations that no single chunk contains. What this strand leaves open is a retrieval unit that matches the relational structure of the configuration task.
+%
+%\subsection{GraphRAG and knowledge-graph-grounded LLMs}
+%GraphRAG replaces flat passages with a graph and retrieves over it. \citet{edge2024local} build an entity graph from a text corpus, partition it into communities, and answer global questions through hierarchical summaries, improving comprehensiveness over conventional RAG. \citet{peng2025graphragsurvey} systematise the field into graph-based indexing, graph-guided retrieval, and graph-enhanced generation, which is the taxonomy this paper uses to position its pipeline. Three recent works approach the present problem most closely. \citet{yu2025graphragiot} build a knowledge graph from an IoT platform's documentation and use GraphRAG with recursive self-reflection to translate multi-constraint questions into executable graph queries, but the output is a natural-language answer, not a deployable configuration artifact. \citet{peng2026grounding} ground an agentic LLM in a lightweight building semantic layer and show that semantic grounding beats a Brick model and a raw-document baseline on question answering while using fewer input tokens, supporting end-to-end tool use and model construction, but their scope is retrieval and simulation on a single building rather than cross-platform configuration generation. \citet{qian2026brickdicl} apply dynamic in-context learning to classify data points into Brick classes, automating one step of instantiation but not the generation of a controller configuration. What this strand leaves open, and what C2 addresses, is graph-retrieved generation of a correct, platform-specific configuration artifact, evaluated on correctness rather than on answer quality.
+%
+%\subsection{Positioning relative to the closest prior art}
+%The distance from the three nearest works is defined by task, input, and evaluation. Relative to \citet{yu2025graphragiot}, the target is not a grounded answer but an executable configuration, and the input is live device and binding state rather than static platform documentation. Relative to \citet{peng2026grounding}, the scope is two heterogeneous platforms and a generation task, not retrieval and simulation on one building. Relative to \citet{qian2026brickdicl}, the automation spans the whole deployment task, including strategy selection and interface binding, not point classification alone. Relative to the ontology works, Brick \citep{balaji2018brick} and RealEstateCore \citep{hammar2019realestatecore} supply the target vocabulary, but this paper does not assume a curated instance exists; C1 derives the graph from raw platform metadata, and the fixed schemas cannot by themselves carry platform-specific interface syntax. The intersection this paper occupies, live multi-platform metadata as input, graph-retrieved generation as method, and configuration correctness as evaluation, is empty in the reviewed literature. The empty intersection is not incidental: configuration generation requires an input (live platform state), a method (relational retrieval), and a target (an executable artifact) that the reviewed works supply only separately.
+%
+%% =====================================================================
+%\section{Problem Formulation and System Overview}
+%
+%\subsection{Task definition}
+%Demand-based HVAC controller deployment is defined as a two-step task. First, infer the correct control strategy from identified sensor availability. Second, generate the correct platform-specific data-interface configuration that realises that strategy. The unit of work is one target space (a room or zone) on one platform: given the set of points available in that space and the capabilities of the target platform, produce the strategy decision and the complete interface configuration that a platform runtime could load. Ground truth is expert-authored configurations, authored independently of the knowledge graph schema, so that correctness is measured against engineering intent rather than against the graph's own encoding.
+%
+%\subsection{Formalisation}
+%Let a platform instance be represented by its metadata, $M = (D, P, R)$, where $D$ is the set of devices in the target space, $P$ the set of data points exposed by those devices, and $R$ the relations among them (a point belongs to a device, a device serves a space, a point measures a quantity). Let $S$ be a finite set of admissible control strategies, each associated with a sensor-availability precondition. Let $B$ be the platform-specific binding language, the set of valid interface constructs for that platform. A deployment case is a triple (target space, target platform, task instance). A solution is a pair $(s^{*}, c^{*})$ with $s^{*} \in S$ and $c^{*} \in B$, such that the sensor-availability precondition of $s^{*}$ is satisfied by the points in the target space and $c^{*}$ is a syntactically valid, semantically correct realisation of $s^{*}$ in the target platform. The task is to produce $(s^{*}, c^{*})$ from the platform state without human authoring.
+%
+%Two aspects of this formulation matter for evaluation. The strategy space $S$ is platform-independent: the same physical space should yield the same strategy regardless of whether it is managed through FIWARE or ioBroker. The binding $c^{*}$ is platform-specific: the same strategy yields structurally different configurations on the two platforms. This separation is what makes cross-platform reuse measurable, and it is what a flat retrieval approach tends to conflate.
+%
+%The formulation also fixes what counts as an error. A solution can fail at step (i) by selecting a strategy the available points cannot support; at step (ii) by emitting a binding that is syntactically invalid or that references a point outside the target space; or by producing a configuration that is individually valid but implements the wrong strategy. These are distinct failure modes with distinct causes, and the evaluation keeps them separate because a method that repairs binding errors need not repair strategy errors. Defining the task this way also rules out a degenerate solution: emitting a single constant strategy or a maximally permissive configuration would satisfy syntax while failing the strategy precondition, so it is scored incorrect.
+%
+%\subsection{System overview}
+%The system has four stages, shown in Figure~\ref{fig:arch}. Stage one reads live metadata from the target platform and normalises it. Stage two generates a knowledge graph from that metadata (C1). Stage three is the GraphRAG pipeline: it receives a deployment request, retrieves a relevant subgraph, and generates the strategy and configuration (C2). Stage four validates the generated configuration against schema and platform constraints and, on success, presents it for deployment (C3). Figure~\ref{fig:schema} shows a schema fragment for one example space, illustrating the node types (space, device, point, strategy) and the edges (serves, hasPoint, measures, supports) that the pipeline traverses.
+%
+%\begin{figure}[t]
+%\centering
+%\fbox{\parbox[c][3.2cm][c]{0.92\columnwidth}{\centering\small\textbf{Figure 1 placeholder}\\ end-to-end architecture: platform metadata $\rightarrow$ normalisation $\rightarrow$ knowledge graph $\rightarrow$ GraphRAG retrieval and generation $\rightarrow$ validation and deployment. To be rendered.}}
+%\caption{End-to-end architecture.}
+%\label{fig:arch}
+%\end{figure}
+%
+%\begin{figure}[t]
+%\centering
+%\fbox{\parbox[c][3.2cm][c]{0.92\columnwidth}{\centering\small\textbf{Figure 2 placeholder}\\ knowledge graph schema fragment for one example space, showing space, device, point, and strategy nodes and the serves, hasPoint, measures, and supports edges. To be rendered.}}
+%\caption{Knowledge graph schema fragment.}
+%\label{fig:schema}
+%\end{figure}
+%
+%\subsection{Evaluation conditions preview}
+%The task is evaluated under three conditions, summarised in Table~\ref{tab:conditions} and specified fully in the Evaluation section. Two are full-context LLM baselines: B1 supplies the raw platform metadata in the prompt, and B2 supplies the generated knowledge graph in full. The third is the proposed GraphRAG pipeline, which retrieves only the task-relevant subgraph before generation. All three conditions use the same generator and prompt scaffolding, so the comparison isolates how context is selected and structured rather than the model itself. Each condition is run with a family of mid-size open models (the Gemma family) and with a larger proprietary model (Gemini Flash Lite), which makes model scale a second axis of the comparison.
+%
+%\begin{table}[t]
+%\caption{Evaluation conditions.}
+%\label{tab:conditions}
+%\centering\small
+%\setlength{\tabcolsep}{4pt}
+%\begin{tabular}{@{}p{0.7cm}p{2.4cm}p{2.3cm}@{}}
+%\toprule
+%ID & Condition & Context supplied \\
+%\midrule
+%B1 & Full-context LLM (raw metadata) & Entire raw platform metadata \\
+%B2 & Full-context LLM (knowledge graph) & Entire knowledge graph \\
+%P & GraphRAG (proposal) & Task-relevant subgraph \\
+%\bottomrule
+%\end{tabular}
+%
+%\vspace{0.3em}
+%\footnotesize Model tiers (tested under every condition): mid-size Gemma family; larger Gemini Flash Lite.
+%\end{table}
+%
+%% =====================================================================
+%\section{Method}
+%
+%The method has three components: graph generation from live platform metadata (C1), graph-retrieved generation (C2), and validation and deployment (C3). Each subsection answers the counterfactual that a reviewer would raise against it.
+%
+%\subsection{Knowledge graph generation from live IoT platform metadata (C1)}
+%The graph is generated, not curated. For each target platform, the generator connects to the platform's management interface and enumerates its objects in their native structure. On FIWARE this means entities and their NGSI-LD attributes from the context broker \citep{bauer2022fiware}; on ioBroker this means the object tree of states and their metadata, the per-instance model that typifies the open-source automation class \citep{setz2021comparison}. The two enumerations are structurally different by design, and the generator treats this difference as an input rather than attempting to flatten it.
+%
+%Normalisation proceeds in three passes. The first pass extracts a platform-agnostic core: it identifies spaces, devices, and points and labels each point with a coarse quantity type (temperature, humidity, occupancy, setpoint, actuator command), guided by the observation and actuation distinctions of the SSN ontology \citep{compton2012ssn} and the asset taxonomy of Brick \citep{balaji2018brick}. The second pass records platform-specific detail as typed properties on the relevant nodes, so that interface syntax is retained rather than discarded. The third pass writes provenance: every node and edge carries its source platform, source object path, and extraction timestamp, so that a generated configuration can be traced to the metadata that justified it. The output is a directed, labelled property graph with four principal node types (space, device, point, strategy) and edges that encode containment (a point belongs to a device, a device serves a space), measurement semantics (a point measures a quantity), and capability (a point supports a strategy precondition).
+%
+%The extraction is tolerant of the platforms' differences rather than dependent on a shared vocabulary. FIWARE entities expose attributes with structured context metadata, so the generator can read semantic hints directly. ioBroker objects expose a state tree whose names are operator-defined, so the generator infers roles from object metadata and value types, falling back to lexical heuristics where metadata is thin. Both paths emit the same node and edge types, which is what allows the downstream pipeline to be platform-agnostic while the interface grammar used at generation time stays platform-specific. The graph is versioned per extraction run, so a configuration generated against one graph state can be reproduced and audited against that same state.
+%
+%The graph is deliberately shallow. Depth is bounded to the neighbourhood needed for a space-level decision, which keeps retrieval tractable and keeps the representation auditable. The conceptual vocabulary follows established building ontologies \citep{balaji2018brick,hammar2019realestatecore}, but the instance data is derived entirely from live platform state.
+%
+%Because the graph is extracted from untyped platform metadata rather than authored, its accuracy is a measured rather than an assumed property. The evaluation therefore includes a graph-quality validation step: a manually annotated sample of nodes and edges per platform is used to compute extraction precision and recall for the four node types and the containment, measurement, and capability edges, and to report the residual ambiguity that lexical fallback introduces on ioBroker. This separates two failure sources in the downstream evaluation, a wrong graph and a wrong use of a correct graph, which the error taxonomy alone cannot. The differentiation from Brick and RealEstateCore instantiation is therefore not only architectural but empirical: C1 is credited only to the extent that extraction quality is demonstrated on live data.
+%
+%\textbf{Why not a hand-built knowledge graph.} A hand-built graph would move the manual effort from configuration authoring to graph authoring without removing it, which is precisely the cost documented by \citet{pritoni2021metadata} and \citet{fierro2020shepherding}. It would also be stale: the graph must track device additions, point renames, and platform upgrades, and a curated artifact drifts from the live system it describes. Automatic generation from live metadata makes the graph a projection of current state, which is the property that deployment automation actually requires. The closest prior art, \citet{qian2026brickdicl}, automates one step of instantiation by classifying points into Brick classes; C1 goes further by constructing the relational structure (containment and capability edges) on which configuration generation depends.
+%
+%\subsection{GraphRAG retrieval and generation pipeline (C2)}
+%The pipeline follows the three-stage structure of \citet{peng2025graphragsurvey}. Indexing is the graph built in the graph-generation subsection; retrieval selects a subgraph; generation conditions an LLM on that subgraph.
+%
+%Retrieval begins by parsing a deployment request into a task specification: the target space and the target platform. The pipeline then anchors on the space node and expands outward through the containment and capability edges to assemble a task-relevant subgraph. Expansion is bounded by a depth parameter, which the Evaluation section treats as an ablation variable. The assembled subgraph is serialised into a compact textual context: nodes as typed records, edges as triples, and platform-specific properties inline. This serialisation is the unit that replaces both the full-context prompt of B1 and the whole-graph context of B2. Because it is assembled by traversal from the space, it contains the relational facts that the task requires and omits the rest.
+%
+%The serialisation is compact by design. Each node becomes one typed record with its platform properties, each edge becomes one triple, and the subgraph is emitted in a deterministic order so that the same retrieval yields the same context. Determinism matters for evaluation, because it removes context-assembly sampling from the sources of variance and leaves the generator's own decoding as the only stochastic component, which can then be controlled by fixing decoding parameters across conditions.
+%
+%Generation is a two-step, schema-constrained process. The model first selects a strategy whose precondition the retrieved points satisfy, and then generates the platform-specific binding configuration for that strategy in the target language. The generation prompt includes the admissible strategy set, the target platform's interface grammar, and a small number of format examples. The model is required to emit a structured object that conforms to the platform schema, and the pipeline rejects any output that fails to parse. The same underlying model is used across the three conditions within each model tier, so any difference in accuracy is attributable to the selected context rather than to the model. Within a tier the generator is pinned to a fixed version and a fixed decoding configuration (temperature, top-$p$, and maximum output length); the model identity, version, decoding parameters, and the prompt-length budget are reported with the results so that the generator-confounding control can be verified rather than assumed.
+%
+%Rejection is informative rather than terminal. A parse failure is recorded with the raw output and the schema violation, and the pipeline may retry once with the violation appended to the prompt. The retry is logged, and the configuration is counted as incorrect at first attempt if a retry was needed, so that format compliance is scored as part of the task rather than repaired silently. This keeps the metric aligned with what a deployment engineer would experience.
+%
+%\textbf{Why not fine-tuning.} Fine-tuning adapts the model's weights to a distribution of configurations but does not give it access to the specific device and point state of the space at deployment time. Space-level deployment is instance-level: the correct configuration depends on which points are actually present, and that varies per space. A fine-tuned model would still need the current metadata supplied at inference, which returns the problem to context assembly (the very thing being evaluated) while adding training cost and freezing the platform grammar at training time. Conditioning a general model on a freshly generated subgraph keeps the configuration current and lets the pipeline track platforms as they change.
+%
+%\subsection{Validation and deployment loop (C3)}
+%A generated configuration is a candidate, not a commitment. The pipeline validates it in three layers before it is applied. Syntactic validation parses the output against the target platform's schema and rejects malformed artifacts. Referential validation checks every point and device identifier in the configuration against the graph, catching bindings to unmapped or nonexistent points. Consistency validation checks that the configuration's bindings implement the strategy that was selected, closing the gap between step (i) and step (ii) of the task. A configuration that passes all three layers is presented for deployment; the loop records the outcome, and failures are retained as labelled error cases for the taxonomy in the Evaluation section.
+%
+%The three layers are ordered by cost. Syntactic validation is cheapest and rejects malformed output before any graph lookup; referential validation consults the graph and catches identifiers that are syntactically well-formed but absent from the space; consistency validation is the most expensive because it reasons about whether the bindings implement the selected strategy, and it is where a strategy-binding mismatch surfaces. Ordering the layers this way ensures that a failure is attributed to the earliest layer that can explain it, which keeps the error taxonomy clean and makes the source of an error diagnosable from the layer that rejected it.
+%
+%The loop is human-supervised in this study. The generated configuration is not written to a production platform automatically; an engineer reviews the validated artifact, and the review is a recorded outcome rather than a hidden step. This choice keeps the evaluation honest about what is automated and what is not.
+%
+%\textbf{Why not plain RAG.} Flat retrieval splits platform metadata and documentation into chunks and returns the top-$k$ by embedding similarity. A configuration decision depends on a conjunction of facts across several entities, and chunk similarity ranks passages by surface proximity to the query, not by their role in the relational structure. The subgraph of the GraphRAG subsection is assembled by traversal, so it contains the binding-relevant neighbours of the space regardless of whether they are lexically similar to the request. The empirical consequence is measured by the P-versus-B1 and P-versus-B2 contrasts in the Evaluation section; the design consequence is that graph retrieval exposes the relations a configuration must satisfy, while flat retrieval exposes text that happens to look relevant.
+%
+%% =====================================================================
+%\section{Evaluation}
+%
+%This section specifies the evaluation and reports the study design. Result cells that depend on the completed runs are marked with explicit placeholders and filled once the experiment is executed.
+%
+%\subsection{Research questions}
+%The evaluation addresses four questions. RQ1: does GraphRAG (P) produce more accurate configurations than the two full-context baselines (B1, raw metadata; B2, knowledge graph)? RQ2: does GraphRAG let a mid-size model match a larger model, that is, does it narrow the accuracy gap between the Gemma family and Gemini Flash Lite? RQ3: how does accuracy change when platform metadata is incomplete? RQ4: what is the cost of any advantage in tokens and latency? RQ3 is operationalised by controlled metadata degradation: for a subset of cases, point descriptions are dropped, quantity-type labels are removed, and point names are anonymised, in three graded levels (mild, moderate, severe), and every condition is re-run at each level so that the degradation is measured against the same cases rather than a separate sample.
+%
+%\subsection{Task and dataset}
+%The task is the demand-based HVAC controller deployment problem formalised in the Problem Formulation section, instantiated as cases across two platforms, FIWARE \citep{bauer2022fiware} and ioBroker (the platform class reviewed by \citealt{setz2021comparison}). Each case specifies a target space, its available points, and a target platform, and asks for a strategy and a configuration. The sample is $N = 50$ cases, balanced across platforms, preceded by a pilot used to verify the harness and refine the error taxonomy. Cases are drawn from target-space configurations in two real pilot installations, supplemented, where de-identification or coverage requires it, by synthetically generated spaces that preserve the device-point topology of the originals; each case is labelled with its provenance. Raw platform metadata is de-identified before release; identifiers are replaced with stable pseudonyms and location or occupant information is removed. Cases vary sensor availability (for example, spaces with and without occupancy sensing) so that strategy selection is non-trivial and not answered by a constant.
+%
+%Ground truth for each case is an expert-authored configuration, authored independently of the knowledge graph schema: experts work from the target space's physical description and the platform's documentation, without reference to the node and edge types of the graph-generation subsection or to any output of the pipeline. This separation is a design requirement, not a convenience, because grading generated output against a schema derived by the same pipeline would be circular. Each case carries two ground-truth artifacts, the correct strategy and the correct platform configuration.
+%
+%\subsection{Conditions}
+%Three conditions are compared, following Table~\ref{tab:conditions}. B1 is the full-context baseline supplied with the raw platform metadata for the target space. B2 is the full-context baseline supplied with the generated knowledge graph in full. P is the proposed GraphRAG pipeline, which retrieves only the task-relevant subgraph before generation. All three share the same generator and the same prompt scaffolding within a tier, so that the comparison isolates how context is selected and structured rather than the model. B1 and B2 deliberately stress the setting that \citet{liu2024lost} show is unreliable when relevant information is not well-positioned.
+%
+%Each condition is run with two model tiers to test the model-scale claim of this paper: a family of mid-size open-weight models (Gemma) and a larger proprietary model (Gemini Flash Lite). Within a tier the generator is pinned to a fixed version and a fixed decoding configuration (temperature, top-$p$, and maximum output length), and the prompt-length budgets for B1 and B2 are fixed in advance and reported, so that the conditions differ in context selection alone.
+%
+%\subsection{Metrics}
+%The primary measures are precision and recall of deployment accuracy. A generated configuration is decomposed into configuration elements (point and device bindings, parameter values, and interface constructs) and compared against the ground-truth configuration of the same case: precision is the fraction of generated elements that match ground truth, recall is the fraction of ground-truth elements that the generation reproduces, and the harmonic mean (F1) summarises the two. Precision and recall are reported per case, per condition, and per model tier, and aggregated. Strategy correctness is a secondary binary judgement of whether the generated strategy matches the expert strategy. Token cost and latency are recorded per case. An error taxonomy classifies the elements that precision misses and recall omits.
+%
+%\subsection{Grading}
+%Grading is automated. Each generated configuration is parsed into a canonical element structure defined per platform and aligned to ground truth by canonical path and semantic role, so that ordering differences within an order-independent block are equivalent. Element values are compared in normalised form: whitespace and identifier case are ignored, platform identifiers are canonicalised, and numeric values are compared within a fixed tolerance. An element counts as matched only when the canonical comparison establishes it; string-different but semantically equivalent output is credited only when canonicalisation resolves the difference, and never by free judgement. Precision and recall are then computed from the matched and unmatched elements, and the unmatched elements feed the taxonomy. The arbitration rule is fixed in advance: an element that fails canonical alignment counts as unmatched, and any manual review is performed blind to the condition. Graders are blinded to condition identity where feasible, and any unblinded cases are reported as such.
+%
+%\subsection{Ablations and comparisons}
+%The main contrast is P versus B2, which holds the content (the knowledge graph) fixed and varies only whether the full graph or a retrieved subgraph is supplied; this isolates retrieval from content. The contrast B2 versus B1 isolates the representation, comparing the knowledge graph against raw metadata as full context. Subgraph depth is varied at a shallow, medium, and deep setting to show whether accuracy saturates or degrades as retrieved context grows. The model-tier comparison (Gemma versus Gemini Flash Lite) is run under every condition, so the model-scale effect can be read per context strategy. Each comparison reuses the case set and metrics above.
+%
+%\subsection{Results}
+%\emph{[RESULTS PLACEHOLDER: deployment accuracy by condition and model tier --- to be filled after experiment.]} Table~\ref{tab:results} reports precision, recall, and F1 across the three conditions and the two model tiers, so that the P-versus-baselines gap and the model-scale gap are both visible.
+%
+%\begin{table}[t]
+%\caption{Deployment accuracy (precision / recall / F1) by condition and model tier. \emph{[PLACEHOLDER --- all cells to be filled after experiment.]}}
+%\label{tab:results}
+%\centering\footnotesize
+%\setlength{\tabcolsep}{4pt}
+%\begin{tabular}{@{}p{2.6cm}cc@{}}
+%\toprule
+%Condition & Gemma (mid-size) & Gemini Flash Lite \\
+% & P/R/F1 & P/R/F1 \\
+%\midrule
+%B1 Full-context (raw metadata) & [PH] & [PH] \\
+%B2 Full-context (knowledge graph) & [PH] & [PH] \\
+%P GraphRAG (subgraph) & [PH] & [PH] \\
+%\bottomrule
+%\end{tabular}
+%\end{table}
+%
+%\emph{[RESULTS PLACEHOLDER: error taxonomy --- to be filled after experiment.]} Table~\ref{tab:errors} reports the distribution of error categories across conditions, which attributes any advantage to strategy-level or binding-level causes.
+%
+%\begin{table}[t]
+%\caption{Error taxonomy by condition. \emph{[PLACEHOLDER --- all cells to be filled after experiment.]}}
+%\label{tab:errors}
+%\centering\footnotesize
+%\setlength{\tabcolsep}{3pt}
+%\begin{tabular}{@{}p{2.3cm}p{3.2cm}ccc@{}}
+%\toprule
+%Error category & Description & B1 & B2 & P \\
+%\midrule
+%Wrong strategy & Strategy does not match sensor availability & [PH] & [PH] & [PH] \\
+%Missing element & Ground-truth element not generated (recall loss) & [PH] & [PH] & [PH] \\
+%Spurious element & Generated element absent from ground truth (precision loss) & [PH] & [PH] & [PH] \\
+%Invalid binding & Point/device referenced incorrectly & [PH] & [PH] & [PH] \\
+%Platform-syntax error & Output violates the interface grammar & [PH] & [PH] & [PH] \\
+%Other & Residual errors not covered above & [PH] & [PH] & [PH] \\
+%\bottomrule
+%\end{tabular}
+%\end{table}
+%
+%\subsection{Statistical analysis}
+%The design is paired: every case is solved under each condition and model tier. Precision and recall are compared between P and each baseline with paired tests appropriate to the measure, and bootstrap confidence intervals are reported for the aggregate figures because element-level scores are not normally distributed. Strategy correctness, where binary, is compared with the McNemar test on matched pairs. The model-tier comparison is reported as the P-minus-baseline accuracy gap for the mid-size and the larger model, so that the narrowing claim can be read directly: if the gap is smaller under P than under B1 and B2, the graph is substituting for model scale. Significance thresholds (0.05) and a Holm correction across the pairwise comparisons are fixed in advance.
+%
+%\subsection{Threats to validity and controls}
+%Three threats are controlled by design. Circularity: ground truth is authored independently of the graph schema, so grading cannot reward the pipeline for reproducing its own encoding. Generator confounding: the three conditions share the generator within each model tier, so context selection is isolated. Task narrowness: the evaluation covers demand-based HVAC controller deployment across two platforms, and this boundary is stated so that results are not over-generalised. A residual threat is expert variation in ground truth; where more than one expert authors a case, their agreement is recorded and disagreement is treated as a documented case attribute.
+%
+%% =====================================================================
+%\section{Discussion}
+%
+%The evaluation answers a specific question: whether the structure of retrieval, rather than the presence of retrieval, is what makes LLM-based controller deployment work. The two full-context baselines test the simplest hypotheses, that a capable model given everything will do as well. They also separate representation from retrieval: B2 supplies the same knowledge graph as the proposal, so the P-versus-B2 gap isolates retrieval, while the B2-versus-B1 gap isolates the graph representation itself. If P does not beat both, the claim fails, and the design makes that outcome visible rather than obscured by a favourable framing.
+%
+%The mechanism is attributed to the task's relational character. A configuration is a consistent assignment across a target space, its devices, its points, and a platform grammar, and the constraints that make it correct are edges: this point belongs to this device, this device serves this space, this strategy requires this capability. Raw metadata and the full graph both contain these facts, but when the whole context is supplied, the model must first locate the relevant subgraph within it, and \citet{liu2024lost} show that locating information within a long context is exactly where attention degrades. Graph retrieval performs that localisation mechanically, which is why it should raise precision (fewer spurious elements) and recall (fewer missing elements) at the same time. The error taxonomy reported with the results is included to distinguish this mechanism from a general accuracy difference: if the GraphRAG advantage concentrates in spurious and missing bindings rather than in strategy errors, the relational explanation is supported.
+%
+%The model-tier comparison tests a practical claim. If the gap between the mid-size Gemma models and Gemini Flash Lite is smaller under P than under B1 and B2, the graph is doing work that model scale would otherwise have to supply, which matters for deployment on local hardware and for cost. That result would also speak to the cross-platform goal, because it suggests that a shared graph representation, not a large model, is what carries deployment logic between platforms.
+%
+%Positioned against prior art, the contribution is graph-retrieved generation of a deployable artifact. \citet{peng2026grounding} show that semantic grounding helps LLM agents in buildings, but for retrieval and simulation on one building; this work asks whether the same grounding helps when the output must be a configuration another platform can execute, across two platforms with incompatible object models. \citet{yu2025graphragiot} show GraphRAG over IoT-platform documentation, but for question answering; this work turns the retrieved structure into an artifact rather than an answer. The cross-platform requirement is the sharpest test, because it forces the graph to separate the platform-independent strategy decision from the platform-specific binding, which is exactly the reuse the introduction identifies as blocked.
+%
+%Two qualifications are worth stating in advance. If GraphRAG's advantage is large on binding precision or recall but small on strategy correctness, the contribution is best framed as a binding problem rather than a strategy problem, which would sharpen the scope. If the advantage grows as metadata becomes incomplete, then the value of graph structure is robustness rather than peak accuracy, and the contribution should be described that way. If GraphRAG improves accuracy but at a token and latency premium over the full-context baselines, that trade-off is reported rather than hidden; a configuration that costs more tokens to produce may still be worthwhile where it removes engineering hours, so cost is recorded separately from accuracy and weighed against it.
+%
+%% =====================================================================
+%\section{Limitations and Conclusion}
+%
+%The principal limitations are scope and evidence scale. The evaluation covers two platforms and one task family, demand-based HVAC controller deployment; results will not establish the automation of building systems in general, and this boundary is stated so that they are not over-generalised. The graph's quality is bounded by the metadata the platforms expose, so missing or mislabelled points propagate into the graph and the configuration, which the incompleteness arm probes but does not fully resolve. Ground truth depends on expert judgement, and while independence from the graph schema controls the circularity threat, expert variation remains a documented source of uncertainty. Finally, the study is human-supervised: generated configurations are reviewed before application, so any effort saving is measured against a review-inclusive workflow, not a fully autonomous one.
+%
+%Within those limits, the paper's finding is that a GraphRAG pipeline over knowledge graphs generated from live IoT platform metadata automates demand-based HVAC controller deployment, outperforming full-context baselines supplied with raw metadata or with the whole graph, and enabling mid-size models to match a larger model. The result supports three contributions: the automatic graph generation method (C1), the retrieval and generation pipeline (C2) as the load-bearing contribution, and the cross-platform evaluation (C3). Two questions remain open: whether graph generation generalises to platforms whose metadata exposes no usable typing, and whether the accuracy advantage persists when the task is raised from a single space to floor or building level, where the retrieved subgraph must span more spaces. The practical implication is that structure supplied by an automatically derived graph can substitute for model scale, which lowers the cost of deploying cross-platform building services on local models.
+%
+%% =====================================================================
+%\section*{Data Availability Statement}
+%The metadata extraction tooling, the knowledge graph generation scripts, the GraphRAG pipeline, and the evaluation harness will be released in a public repository upon publication. Because the cases are derived from building installations, raw platform metadata will be released in a de-identified and, where required, synthetically equivalent form; source code and the evaluation protocol will be openly available without restriction. Ground-truth configurations will be released alongside the de-identified cases.
+%
+%\section*{AI-Use Disclosure Statement}
+%AI tools were used in the preparation of this manuscript for research assistance and drafting. Specifically, AI-assisted tooling supported literature discovery and metadata verification for the reference corpus, and AI-assisted drafting was used to produce and revise prose under human direction. All technical design decisions, the task definition, the evaluation protocol, the ground-truth authoring requirements, and the interpretation of the work are the responsibility of the authors. The authors reviewed and edited all AI-assisted content and take full responsibility for the final text.
+%
+%\section*{Author Contributions (CRediT)}
+%[Author A]: Conceptualization, Methodology, Software, Writing -- original draft. [Author B]: Investigation, Data curation, Validation, Writing -- review and editing. [Author C]: Supervision, Project administration, Funding acquisition, Writing -- review and editing. [Placeholder author names and roles to be confirmed before submission.]
+%
+%\section*{Conflict of Interest}
+%The authors declare no conflict of interest.
+%
+%\section*{Funding}
+%This work was supported by [Funder Name] under grant [Grant Number]. [Placeholder: funding details to be confirmed before submission.]
+
+% =====================================================================
+%\section*{References}
+%\bibliography{paper}
+
+\end{document}
