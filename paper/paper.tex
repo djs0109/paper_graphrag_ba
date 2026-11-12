@@ -264,6 +264,30 @@ Results show that the GraphRAG pipeline outperforms both baselines, and it also 
 %Demand-based HVAC controller deployment is defined as a two-step task. First, infer the correct control strategy from identified sensor availability. Second, generate the correct platform-specific data-interface configuration that realises that strategy. The unit of work is one target space (a room or zone) on one platform: given the set of points available in that space and the capabilities of the target platform, produce the strategy decision and the complete interface configuration that a platform runtime could load. Ground truth is expert-authored configurations, authored independently of the knowledge graph schema, so that correctness is measured against engineering intent rather than against the graph's own encoding.
 %
 %\subsection{Formalisation}
+\section{Related Work}
+\label{sec:related-work}
+\subsection{GraphRAG and knowledge-graph-grounded LLMs}
+Retrieval-augmented generation (RAG) conditions an LLM on evidence retrieved from an external store \citep{lewis2020retrieval}, which reduces hallucination when the required knowledge sits in self-contained passages.
+Engineering metadata rarely has a text form.
+Whether a controller can be deployed in a room depends on actuation devices, sensor data points, and how the platform interfaces are available.
+The alternative of supplying all metadata in the prompt is unreliable as well, since LLM accuracy drops when relevant information is buried in long inputs \citep{liu2024lost}.
+GraphRAG addresses these issues by retrieving over a graph instead of text chunks.
+\citet{edge2024local} build an entity graph from a corpus and answer global questions through community summaries, and \citet{peng2025graphragsurvey} organise the field into graph-based indexing, graph-guided retrieval, and graph-enhanced generation, the stages along which the pipeline of this paper is described.
+
+In the building and IoT domain, GraphRAG has so far served mainly as an information-access layer.
+LLMs translate natural-language requests into graph queries \citep{iranmaneshLLMassistedGraphRAGInformation2025}, retrieve $k$-hop subgraphs as context for SQL generation in operation and maintenance \citep{liLargeLanguageModelbased2025}, map user intents to action planning in smart homes \citep{jeongOnDeviceIntentReasoning2025}, and answer multi-constraint questions over a graph built from the documentation of an IoT platform \citep{yu2025graphragiot}.
+These works show that GraphRAG can bridge the semantic gap between user intent and specific system implementation, but their outputs are answers, queries, or plans, which a human or another system still has to turn into a working configuration.
+Their retrieval mechanism also scales poorly with heterogeneous platform data.
+With $k$-hop expansion, a small $k$ misses platform-specific interface nodes that lie several relations away from the anchor entity, whereas a large $k$ pulls in neighbourhoods that are irrelevant to the task and inflates the context.
+
+A smaller set of works moves from information access towards automation.
+\citet{lyuLLMpoweredAgentOccupantcentric2026} show, without a graph, that enforcing structured LLM outputs is a good practice to enable automated action in building systems.
+\citet{peng2026grounding} ground an agentic LLM in a lightweight building semantic layer and automate thermal simulation; the semantic layer, however, relies on specific simplification.
+\citet{wenHybridRAGBasedLLMAgents2026} combine keyword, vector, and subgraph retrieval to generate configurations of network optimisation problems.
+% TODO these works show automation potential, but they either rely on customised graphs or other information sources.
+These works show that automated action is generally feasible via LLMs, but they either rely on customised graphs or other information sources.
+A generalized workflow based on comprehensive KGs is still missing.
+
 %Let a platform instance be represented by its metadata, $M = (D, P, R)$, where $D$ is the set of devices in the target space, $P$ the set of data points exposed by those devices, and $R$ the relations among them (a point belongs to a device, a device serves a space, a point measures a quantity). Let $S$ be a finite set of admissible control strategies, each associated with a sensor-availability precondition. Let $B$ be the platform-specific binding language, the set of valid interface constructs for that platform. A deployment case is a triple (target space, target platform, task instance). A solution is a pair $(s^{*}, c^{*})$ with $s^{*} \in S$ and $c^{*} \in B$, such that the sensor-availability precondition of $s^{*}$ is satisfied by the points in the target space and $c^{*}$ is a syntactically valid, semantically correct realisation of $s^{*}$ in the target platform. The task is to produce $(s^{*}, c^{*})$ from the platform state without human authoring.
 %
 %Two aspects of this formulation matter for evaluation. The strategy space $S$ is platform-independent: the same physical space should yield the same strategy regardless of whether it is managed through FIWARE or ioBroker. The binding $c^{*}$ is platform-specific: the same strategy yields structurally different configurations on the two platforms. This separation is what makes cross-platform reuse measurable, and it is what a flat retrieval approach tends to conflate.
