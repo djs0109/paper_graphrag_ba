@@ -329,8 +329,8 @@ Indexing is the graph being built from IoT platform; retrieval is enhanced with 
 Each stage is described in the following subsections.
 
 \subsection{Knowledge graph generation from IoT platform}
-%A knowledge graph construction pipeline (KGCP) has been proposed in our previous work \citep{du2025semantic}, which generates KGs from heterogeneous IoT platforms.
-A knowledge graph construction pipeline (KGCP) has been proposed by Du et al. \citep{du2025semantic} to generate KGs from heterogeneous IoT platforms, where RDF Mapping Language (RML) documents are semi-automatically defined for specific platforms and used to transform the raw platform metadata into KGs.
+%A knowledge graph construction pipeline (KGCP) has been proposed in our previous work \citep{duSemiautomatedKnowledgeGraph2026a}, which generates KGs from heterogeneous IoT platforms.
+A knowledge graph construction pipeline (KGCP) has been proposed by Du et al. \citep{duSemiautomatedKnowledgeGraph2026a} to generate KGs from heterogeneous IoT platforms, where RDF Mapping Language (RML) documents are semi-automatically defined for specific platforms and used to transform the raw platform metadata into KGs.
 This paper reuses the KGCP for the two target platforms, FIWARE and ioBroker.
 
 Besides the existing functions, we further extend the KGCP with a post-processing module to add information about the platform-specific API syntax to the generated KGs by traversing all endpoints nodes and matching them with the corresponding API syntax in the platform specification (swagger or OpenAPI document).
@@ -355,6 +355,12 @@ Three inputs enter the SPARQL generation prompt: the KG of the IoT-enabled build
 Extracting the T-box view per graph instead of taking it from the ontology offers the retrieval agent only vocabulary that the queried graph can satisfy.
 The prompt further fixes query constraints and rules, which prohibit syntax that bypasses the graph such as \texttt{VALUES}, require optional patterns where data may be absent, scope the context, and constrain the output format.
 Since the query is bounded by the task rather than by a hop radius, it reaches the API binding of a data point several relations away from the space without adding the irrelevant neighbourhood that a correspondingly large $k$ would pull in.
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\linewidth]{img/method/graphrag_retrieval_validation_vertical}
+    \caption{Prompt structures and workflow of the validation enhanced information retrieval.}
+    \label{fig:graphrag_retrieval_validation_vertical}
+\end{figure}
 
 As engineering input, a deployment request is decomposed into four requirement-oriented questions, which are answered in a defined order:
 \begin{itemize}[noitemsep,topsep=3pt]
@@ -370,16 +376,12 @@ The retrieved tabular results are therefore passed together with the original qu
 If the information is sufficient, it is handed to the generation stage; if it is not, the notes re-enter the generation prompt as constructive feedback and a further iteration is started, up to three iterations, after which the deployment is reported as failed.
 Judging the result against its downstream use is what distinguishes this loop from a single retrieval pass, since a syntactically valid query can still omit, for instance, an important header that is required in an API endpoint.
 
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=\linewidth]{img/method/graphrag_retrieval_validation_vertical}
-    \caption{Prompt structures and workflow of the validation enhanced information retrieval.}
-    \label{fig:graphrag_retrieval_validation_vertical}
-\end{figure}
-
 \subsection{Automated configuration generation}
-% TODO introduce the final step to generate the configuration
-% TODO showing the output format in listing
+Each of the four questions is answered with a structured output that follows the answer template of its prompt rather than with free text.
+The four answers accumulate into a specification of the deployment case: the target room, the available actuators and sensors, and the API instruction to access those data points.
+The executable configuration is produced in a separate deployment prompt that consumes the accumulated answers and the expected format of the structured output.
+For all models investigated in this paper, the syntax validity is always given.
+The main errors are missing or wrong API information, leading to unsuccessful deployment, or missing data points, leading to a suboptimal strategy being selected.
 
 \section{Evaluation}
 \label{sec:evaluation}
