@@ -215,14 +215,6 @@ Results show that the GraphRAG pipeline outperforms both baselines, and it also 
 \noindent\textbf{Keywords:} GraphRAG; knowledge graph; building automation; IoT platforms; large language models
 
 % =====================================================================
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=\linewidth]{img/abstract}
-    \caption{Overview of the underlying problem and the proposed GraphRAG pipeline}
-    \label{fig:abstract}
-\end{figure}
-
 \section{Introduction}
 \label{sec:introduction}
 % TODO this section is generated. Must be critically reviewed
@@ -236,6 +228,15 @@ Results show that the GraphRAG pipeline outperforms both baselines, and it also 
 %
 % TODO the contributions already here in introduction?
 %This paper presents a GraphRAG pipeline that automates demand-based HVAC controller deployment using knowledge graphs generated from live IoT platform metadata, and shows on two heterogeneous platforms that it outperforms full-context LLM baselines. We make three contributions. C1, supporting, is a method that generates a knowledge graph automatically from live heterogeneous IoT platform metadata, applied on FIWARE and ioBroker. C2, the load-bearing contribution, is the LLM-driven GraphRAG pipeline that retrieves task-relevant subgraphs and generates complete controller configurations. C3 is a cross-platform evaluation on FIWARE and ioBroker that measures deployment accuracy as precision and recall against expert ground truth, and shows that a mid-size model can match a larger model when grounded by the graph.
+
+% TODO introduce the overview figure
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{img/abstract}
+    \caption{Overview of the underlying problem and the proposed GraphRAG pipeline}
+    \label{fig:abstract}
+\end{figure}
+
 
 % TODO rewrite the paper structure introduction
 In the rest of this paper, Section~\ref{sec:related-work} reviews existing literature to contextualize our work, Section~\ref{sec:problem-formulation} specifies the deployment task within the cross-platform environment, Section~\ref{sec:method} details the proposed GraphRAG pipeline, Section~\ref{sec:evaluation} presents the evaluation design and results, Section~\ref{sec:discussion} discusses the findings, and Section~\ref{sec:limitations-conclusion} concludes the paper with limitations and future work.
@@ -322,24 +323,19 @@ RQ4: what is the cost of any advantage in tokens and latency?
 
 \section{Method}
 \label{sec:method}
+We present a GraphRAG pipeline that automates controller deployment in IoT-enabled building systems.
+This pipeline follows the three-stage structure of \citet{peng2025graphragsurvey} with use case specific adaptations and enhancements.
+Indexing is the graph being built from IoT platform; retrieval is enhanced with a self-reflective validation; generation conditions LLMs on the retrieved subgraph to produce an executable configuration for the controllers.
+Each stage is described in the following subsections.
 
-The method has three components: graph generation from live platform metadata (C1), graph-retrieved generation (C2), and validation and deployment (C3). Each subsection answers the counterfactual that a reviewer would raise against it.
+\subsection{Knowledge graph generation from IoT platform}
+%A knowledge graph construction pipeline (KGCP) has been proposed in our previous work \citep{du2025semantic}, which generates KGs from heterogeneous IoT platforms.
+A knowledge graph construction pipeline (KGCP) has been proposed by Du et al. \citep{du2025semantic} to generate KGs from heterogeneous IoT platforms, where RDF Mapping Language (RML) documents are semi-automatically defined for specific platforms and used to transform the raw platform metadata into KGs.
+This paper reuses the KGCP for the two target platforms, FIWARE and ioBroker.
 
-\subsection{Automated controller deployment with GraphRAG}
-The pipeline follows the three-stage structure of \citet{peng2025graphragsurvey}. Indexing is the graph built in the graph-generation subsection; retrieval selects a subgraph; generation conditions an LLM on that subgraph.
+Besides the existing functions, we further extend the KGCP with a post-processing module to add information about the platform-specific API syntax to the generated KGs by traversing all endpoints nodes and matching them with the corresponding API syntax in the platform specification (swagger or OpenAPI document).
 
-\subsubsection{Knowledge graph generation from IoT platform}
-% TODO introduce the T-boxes. Need to update the T-box from semantic-iot paper
-% TODO briefly introduce the KGCP, cite the semantic-iot paper
-%The graph is generated, not curated. For each target platform, the generator connects to the platform's management interface and enumerates its objects in their native structure. On FIWARE this means entities and their NGSI-LD attributes from the context broker \citep{bauer2022fiware}; on ioBroker this means the object tree of states and their metadata, the per-instance model that typifies the open-source automation class \citep{setz2021comparison}. The two enumerations are structurally different by design, and the generator treats this difference as an input rather than attempting to flatten it.
-%
-%Normalisation proceeds in three passes. The first pass extracts a platform-agnostic core: it identifies spaces, devices, and points and labels each point with a coarse quantity type (temperature, humidity, occupancy, setpoint, actuator command), guided by the observation and actuation distinctions of the SSN ontology \citep{compton2012ssn} and the asset taxonomy of Brick \citep{balaji2018brick}. The second pass records platform-specific detail as typed properties on the relevant nodes, so that interface syntax is retained rather than discarded. The third pass writes provenance: every node and edge carries its source platform, source object path, and extraction timestamp, so that a generated configuration can be traced to the metadata that justified it. The output is a directed, labelled property graph with four principal node types (space, device, point, strategy) and edges that encode containment (a point belongs to a device, a device serves a space), measurement semantics (a point measures a quantity), and capability (a point supports a strategy precondition).
-%
-%The extraction is tolerant of the platforms' differences rather than dependent on a shared vocabulary. FIWARE entities expose attributes with structured context metadata, so the generator can read semantic hints directly. ioBroker objects expose a state tree whose names are operator-defined, so the generator infers roles from object metadata and value types, falling back to lexical heuristics where metadata is thin. Both paths emit the same node and edge types, which is what allows the downstream pipeline to be platform-agnostic while the interface grammar used at generation time stays platform-specific. The graph is versioned per extraction run, so a configuration generated against one graph state can be reproduced and audited against that same state.
-%
-%The graph is deliberately shallow. Depth is bounded to the neighbourhood needed for a space-level decision, which keeps retrieval tractable and keeps the representation auditable. The conceptual vocabulary follows established building ontologies \citep{balaji2018brick,hammar2019realestatecore}, but the instance data is derived entirely from live platform state.
-%
-%Because the graph is extracted from untyped platform metadata rather than authored, its accuracy is a measured rather than an assumed property. The evaluation therefore includes a graph-quality validation step: a manually annotated sample of nodes and edges per platform is used to compute extraction precision and recall for the four node types and the containment, measurement, and capability edges, and to report the residual ambiguity that lexical fallback introduces on ioBroker. This separates two failure sources in the downstream evaluation, a wrong graph and a wrong use of a correct graph, which the error taxonomy alone cannot. The differentiation from Brick and RealEstateCore instantiation is therefore not only architectural but empirical: C1 is credited only to the extent that extraction quality is demonstrated on live data.
+% TODO introduce the T-box for this use case
 \begin{figure*}
     \centering
     \includegraphics[width=\textwidth]{img/method/T-box-building-http}
@@ -347,7 +343,7 @@ The pipeline follows the three-stage structure of \citet{peng2025graphragsurvey}
     \label{fig:t-box-building-http}
 \end{figure*}
 
-\subsubsection{Validation enhanced information retrieval}
+\subsection{Validation enhanced information retrieval}
 % TODO introduce the validation and information retrieval prompt
 
 \begin{figure}
@@ -357,7 +353,7 @@ The pipeline follows the three-stage structure of \citet{peng2025graphragsurvey}
     \label{fig:graphrag_retrieval_validation_vertical}
 \end{figure}
 
-\subsubsection{Automated configuration generation}
+\subsection{Automated configuration generation}
 % TODO introduce the final step to generate the configuration
 
 
