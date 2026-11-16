@@ -335,13 +335,34 @@ This paper reuses the KGCP for the two target platforms, FIWARE and ioBroker.
 
 Besides the existing functions, we further extend the KGCP with a post-processing module to add information about the platform-specific API syntax to the generated KGs by traversing all endpoints nodes and matching them with the corresponding API syntax in the platform specification (swagger or OpenAPI document).
 
-% TODO introduce the T-box for this use case
+KGs of both platforms are mapped onto the common T-box shown in Figure~\ref{fig:t-box-building-http}, which fixes the vocabulary that the retrieval stage.
+It is organised in three blocks, covering devices and spaces, data points and commands, and platform-specific API information.
+For the first two blocks, the classes and relations are drawn from Brick \citep{balaji2018brick} and RealEstateCore \citep{hammar2019realestatecore}, which are widely used in building automation domain.
+For the third block, the W3C HTTP vocabulary is used to describe the platform-specific API syntax, while the vocabulary is extended with further schema information to describe the structure of the request or response body.
+
 \begin{figure*}
     \centering
     \includegraphics[width=\textwidth]{img/method/T-box-building-http}
-    \caption{TODO}
+    \caption{Common T-box of the generated knowledge graphs, covering devices and spaces, data points and commands, and platform-specific API information. Dashed boxes denote literal values}
     \label{fig:t-box-building-http}
 \end{figure*}
+
+%Spaces are described with RealEstateCore \citep{hammar2019realestatecore}, where \texttt{rec:Building} and \texttt{rec:Room} are subclasses of \texttt{rec:Architecture} and a room is linked to its building by \texttt{brick:isPartOf}.
+%Devices are described with Brick \citep{balaji2018brick} as subclasses of \texttt{brick:Equipment}, here \texttt{brick:Thermostat}, \texttt{brick:Ventilation\_Air\_System}, and \texttt{brick:Cooling\_Coil}, and each device is assigned to the space it serves by \texttt{brick:hasLocation}.
+%
+%The second block types the data that a platform exposes.
+%\texttt{brick:Sensor} and the setpoint and command classes are subclasses of \texttt{brick:Point}, which separates readable observations from writable control interfaces.
+%The sensor classes relevant to demand-based HVAC control, \texttt{brick:Air\_Temperature\_Sensor}, \texttt{brick:CO2\_Sensor}, and \texttt{brick:Occupancy\_Sensor}, are attached to a room by \texttt{brick:hasLocation}, whereas \texttt{brick:Outside\_Air\_Temperature\_Sensor} is attached to the building, because ambient conditions are shared by all rooms of that building.
+%The writable classes \texttt{brick:Temperature\_Setpoint}, \texttt{brick:Air\_Flow\_Setpoint}, and \texttt{brick:Fan\_Speed\_Command} are bound by \texttt{brick:isPointOf} to the device that exposes them.
+%The sensor availability and the actuation capability of a space are therefore both readable from this block alone, which is what the selection of a control strategy requires.
+%
+%The third block carries the platform-specific interface syntax that the post-processing module adds, expressed with the W3C HTTP vocabulary in RDF.
+%Every point is connected by \texttt{rdf:value} to one or more \texttt{http:Request} individuals, so that the semantic description of a point and the operations that read or write it are reachable in a single hop.
+%A request carries its \texttt{http:methodName}, which is \texttt{GET} for reading a point and \texttt{PATCH} for writing it, together with its \texttt{http:absoluteURI} and \texttt{http:absolutePath}, its query parameters as \texttt{http:Parameter} individuals with \texttt{http:paramName} and \texttt{http:paramValue}, and its headers as \texttt{http:MessageHeader} individuals with \texttt{http:fieldName} and \texttt{http:fieldValue}.
+%Requests that carry a payload additionally reference the JSON Schema of their body, so that the generated configuration can be checked against the interface before it is executed.
+
+This three-block structure keeps the platform-independent part of a deployment decision separate from the platform-specific one.
+The first two blocks state which space contains which device and which quantity each point carries, and they are identical for FIWARE and ioBroker; the third block states how a point is actually read or written, and it is where the two platforms differ.
 
 \subsection{Validation enhanced information retrieval}
 % TODO introduce the validation and information retrieval prompt
