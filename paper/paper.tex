@@ -273,53 +273,30 @@ These works show that automated action is generally feasible via LLMs, but they 
 A generalized workflow based on comprehensive KGs is still missing.
 
 \subsection{Research questions}
-% TODO should match the contribution of this paper
-The evaluation addresses four questions.
-RQ1: what is the benefit of GraphRAG (P) regarding deployment accuracy and operational effectiveness compared with the two full-context baselines?
-RQ2: does GraphRAG-based building automation show resilience against increasing data volumes?
-RQ3: can GraphRAG-based building automation work with mid-size local models ?
-RQ4: what is the cost of any advantage in tokens and latency?
+The evaluation addresses two questions.
+RQ1: Does GraphRAG enable automated deployment for cross-platform application deployment? % (10 buildings, gemma4:31b)
+RQ2: does GraphRAG-based building automation show resilience against increasing data volumes and different model size? (10 to 100, 12b, 26b, 31b)
 
 
 % TODO is it typical to have such a section?
 \section{Problem Formulation and System Overview}
 \label{sec:problem-formulation}
-\subsection{Task definition}
-% TODO what is the deployment task for the IoT-building-system?
-
-\subsection{Formalisation}
-% TODO is it needed?
-%Let a platform instance be represented by its metadata, $M = (D, P, R)$, where $D$ is the set of devices in the target space, $P$ the set of data points exposed by those devices, and $R$ the relations among them (a point belongs to a device, a device serves a space, a point measures a quantity). Let $S$ be a finite set of admissible control strategies, each associated with a sensor-availability precondition. Let $B$ be the platform-specific binding language, the set of valid interface constructs for that platform. A deployment case is a triple (target space, target platform, task instance). A solution is a pair $(s^{*}, c^{*})$ with $s^{*} \in S$ and $c^{*} \in B$, such that the sensor-availability precondition of $s^{*}$ is satisfied by the points in the target space and $c^{*}$ is a syntactically valid, semantically correct realisation of $s^{*}$ in the target platform. The task is to produce $(s^{*}, c^{*})$ from the platform state without human authoring.
-%
-%Two aspects of this formulation matter for evaluation. The strategy space $S$ is platform-independent: the same physical space should yield the same strategy regardless of whether it is managed through FIWARE or ioBroker. The binding $c^{*}$ is platform-specific: the same strategy yields structurally different configurations on the two platforms. This separation is what makes cross-platform reuse measurable, and it is what a flat retrieval approach tends to conflate.
-%
-%The formulation also fixes what counts as an error. A solution can fail at step (i) by selecting a strategy the available points cannot support; at step (ii) by emitting a binding that is syntactically invalid or that references a point outside the target space; or by producing a configuration that is individually valid but implements the wrong strategy. These are distinct failure modes with distinct causes, and the evaluation keeps them separate because a method that repairs binding errors need not repair strategy errors. Defining the task this way also rules out a degenerate solution: emitting a single constant strategy or a maximally permissive configuration would satisfy syntax while failing the strategy precondition, so it is scored incorrect.
 
 \subsection{System overview}
 % TODO The FIWARE and ioBroker test environment
 
-\subsection{Evaluation conditions preview}
-% TODO whether to move under the methodology?
-%The task is evaluated under three conditions, summarised in Table~\ref{tab:conditions} and specified fully in the Evaluation section. Two are full-context LLM baselines: B1 supplies the raw platform metadata in the prompt, and B2 supplies the generated knowledge graph in full. The third is the proposed GraphRAG pipeline, which retrieves only the task-relevant subgraph before generation. All three conditions use the same generator and prompt scaffolding, so the comparison isolates how context is selected and structured rather than the model itself. Each condition is run with a family of mid-size open models (the Gemma family) and with a larger proprietary model (Gemini Flash Lite), which makes model scale a second axis of the comparison.
-%
-%\begin{table}[t]
-%\caption{Evaluation conditions.}
-%\label{tab:conditions}
-%\centering\small
-%\setlength{\tabcolsep}{4pt}
-%\begin{tabular}{@{}p{0.7cm}p{2.4cm}p{2.3cm}@{}}
-%\toprule
-%ID & Condition & Context supplied \\
-%\midrule
-%B1 & Full-context LLM (raw metadata) & Entire raw platform metadata \\
-%B2 & Full-context LLM (knowledge graph) & Entire knowledge graph \\
-%P & GraphRAG (proposal) & Task-relevant subgraph \\
-%\bottomrule
-%\end{tabular}
-%
-%\vspace{0.3em}
-%\footnotesize Model tiers (tested under every condition): mid-size Gemma family; larger Gemini Flash Lite.
-%\end{table}
+\subsection{Task and test buildings}
+The task is the demand-based HVAC controller deployment problem of Section~\ref{sec:problem-formulation}.
+A deployment case names one target room and one platform and asks for a control strategy and an executable configuration.
+The number of rooms in the building is therefore the volume of metadata that has to be searched, not the number of configurations to be produced, which keeps the output of a case constant while the retrieval problem grows.
+
+Test buildings are instantiated on both platforms, FIWARE \citep{bauer2022fiware} and ioBroker.
+The ten-room building of E1 is derived from the pilot installations.
+The larger instances of E2, at 25, 50, and 100 rooms, are generated by the same instantiation procedure, which preserves the device-to-point topology of the originals and varies sensor availability across rooms, so that strategy selection is not answered by a constant.
+Every building is exported twice, once as raw platform metadata and once as a generated knowledge graph, so that the three conditions are supplied with the same building rather than with different data.
+
+Ground truth for a case is an expert-authored pair of a control strategy and a platform configuration.
+It is authored from the physical description of the target room and the platform API documentation, independently of the T-box of Figure~\ref{fig:t-box-building-http}, because grading generated output against a schema produced by the same pipeline would be circular.
 
 \section{Method}
 \label{sec:method}
@@ -385,81 +362,109 @@ The main errors are missing or wrong API information, leading to unsuccessful de
 
 \section{Evaluation}
 \label{sec:evaluation}
-This section specifies the evaluation and reports the study design. Result cells that depend on the completed runs are marked with explicit placeholders and filled once the experiment is executed.
+The evaluation is organised as two experiments that share one task, one setting of test buildings, and the open-weight models in Gemma4 family.
+Experiment E1 fixes the data volume at a ten-room building and the language model at the largest local variant, and compares the three context strategies; it answers RQ1.
+Experiment E2 varies the building from ten to one hundred rooms and the model from the 31B variant down to the 12B variant across all three context strategies; it answers RQ2.
 
-
-\subsection{Task and dataset}
-The task is the demand-based HVAC controller deployment problem formalised in the Problem Formulation section, instantiated as cases across two platforms, FIWARE \citep{bauer2022fiware} and ioBroker (the platform class reviewed by \citealt{setz2021comparison}). Each case specifies a target space, its available points, and a target platform, and asks for a strategy and a configuration. The sample is $N = 50$ cases, balanced across platforms, preceded by a pilot used to verify the harness and refine the error taxonomy. Cases are drawn from target-space configurations in two real pilot installations, supplemented, where de-identification or coverage requires it, by synthetically generated spaces that preserve the device-point topology of the originals; each case is labelled with its provenance. Raw platform metadata is de-identified before release; identifiers are replaced with stable pseudonyms and location or occupant information is removed. Cases vary sensor availability (for example, spaces with and without occupancy sensing) so that strategy selection is non-trivial and not answered by a constant.
-
-Ground truth for each case is an expert-authored configuration, authored independently of the knowledge graph schema: experts work from the target space's physical description and the platform's documentation, without reference to the node and edge types of the graph-generation subsection or to any output of the pipeline. This separation is a design requirement, not a convenience, because grading generated output against a schema derived by the same pipeline would be circular. Each case carries two ground-truth artifacts, the correct strategy and the correct platform configuration.
-
-\subsection{Conditions}
-Three conditions are compared, following Table~\ref{tab:conditions}. B1 is the full-context baseline supplied with the raw platform metadata for the target space. B2 is the full-context baseline supplied with the generated knowledge graph in full. P is the proposed GraphRAG pipeline, which retrieves only the task-relevant subgraph before generation. All three share the same generator and the same prompt scaffolding within a tier, so that the comparison isolates how context is selected and structured rather than the model. B1 and B2 deliberately stress the setting that \citet{liu2024lost} show is unreliable when relevant information is not well-positioned.
-
-Each condition is run with two model tiers to test the model-scale claim of this paper: a family of mid-size open-weight models (Gemma) and a larger proprietary model (Gemini Flash Lite). Within a tier the generator is pinned to a fixed version and a fixed decoding configuration (temperature, top-$p$, and maximum output length), and the prompt-length budgets for B1 and B2 are fixed in advance and reported, so that the conditions differ in context selection alone.
-
-\subsection{Metrics}
-The primary measures are precision and recall of deployment accuracy. A generated configuration is decomposed into configuration elements (point and device bindings, parameter values, and interface constructs) and compared against the ground-truth configuration of the same case: precision is the fraction of generated elements that match ground truth, recall is the fraction of ground-truth elements that the generation reproduces, and the harmonic mean (F1) summarises the two. Precision and recall are reported per case, per condition, and per model tier, and aggregated. Strategy correctness is a secondary binary judgement of whether the generated strategy matches the expert strategy. Token cost and latency are recorded per case. An error taxonomy classifies the elements that precision misses and recall omits.
-
-\subsection{Grading}
-Grading is automated. Each generated configuration is parsed into a canonical element structure defined per platform and aligned to ground truth by canonical path and semantic role, so that ordering differences within an order-independent block are equivalent. Element values are compared in normalised form: whitespace and identifier case are ignored, platform identifiers are canonicalised, and numeric values are compared within a fixed tolerance. An element counts as matched only when the canonical comparison establishes it; string-different but semantically equivalent output is credited only when canonicalisation resolves the difference, and never by free judgement. Precision and recall are then computed from the matched and unmatched elements, and the unmatched elements feed the taxonomy. The arbitration rule is fixed in advance: an element that fails canonical alignment counts as unmatched, and any manual review is performed blind to the condition. Graders are blinded to condition identity where feasible, and any unblinded cases are reported as such.
-
-\subsection{Ablations and comparisons}
-The main contrast is P versus B2, which holds the content (the knowledge graph) fixed and varies only whether the full graph or a retrieved subgraph is supplied; this isolates retrieval from content. The contrast B2 versus B1 isolates the representation, comparing the knowledge graph against raw metadata as full context. Subgraph depth is varied at a shallow, medium, and deep setting to show whether accuracy saturates or degrades as retrieved context grows. The model-tier comparison (Gemma versus Gemini Flash Lite) is run under every condition, so the model-scale effect can be read per context strategy. Each comparison reuses the case set and metrics above.
-
-\subsection{Results}
-\emph{[RESULTS PLACEHOLDER: deployment accuracy by condition and model tier --- to be filled after experiment.]} Table~\ref{tab:results} reports precision, recall, and F1 across the three conditions and the two model tiers, so that the P-versus-baselines gap and the model-scale gap are both visible.
+Three conditions are defined in Table~\ref{tab:conditions}, which differ only in the context that reaches the generation stage.
+B1 supplies the raw platform metadata of the whole building, B2 supplies the generated knowledge graph of the whole building, and P supplies the subgraph retrieved by the validation-enhanced retrieval stage.
+All three use the same deployment prompt, the same structured output format, and the same decoding configuration, so that a difference in deployment accuracy can be fairly compared.
 
 \begin{table}[t]
-\caption{Deployment accuracy (precision / recall / F1) by condition and model tier. \emph{[PLACEHOLDER --- all cells to be filled after experiment.]}}
-\label{tab:results}
+\caption{Evaluation conditions, which differ only in the context supplied to the identical deployment step}
+\label{tab:conditions}
 \centering\footnotesize
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}p{2.6cm}cc@{}}
+\begin{tabular}{@{}p{0.6cm}p{2.6cm}p{3.6cm}@{}}
 \toprule
-Condition & Gemma (mid-size) & Gemini Flash Lite \\
- & P/R/F1 & P/R/F1 \\
+ID & Condition & Context supplied \\
 \midrule
-B1 Full-context (raw metadata) & [PH] & [PH] \\
-B2 Full-context (knowledge graph) & [PH] & [PH] \\
-P GraphRAG (subgraph) & [PH] & [PH] \\
+B1 & Full-context, raw metadata & Platform metadata of the whole building and API specification \\
+B2 & Full-context, knowledge graph & Generated KG of the whole building \\
+P & GraphRAG (proposed) & Dedicated information retrieved from KG \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\emph{[RESULTS PLACEHOLDER: error taxonomy --- to be filled after experiment.]} Table~\ref{tab:errors} reports the distribution of error categories across conditions, which attributes any advantage to strategy-level or binding-level causes.
+% TODO introduce the metrics
+%The primary measure is deployment accuracy, computed element-wise.
+%A generated configuration is decomposed into configuration elements, which are the device and point bindings, the parameter values, and the API interaction constructs, and is compared against the ground-truth configuration of the same case: precision is the share of generated elements that match ground truth, recall is the share of ground-truth elements reproduced, and F1 summarises the two.
+%The deployment success rate is the share of cases that yield a configuration at all, which separates a wrong configuration from a case in which the retrieval loop reaches its iteration cap or a baseline returns output that does not conform to the required format.
+%Strategy correctness is a binary secondary judgement of whether the selected strategy matches the expert strategy.
+%
+%How a result is reached is measured in two further groups.
+%For condition P, the retrieval stage is instrumented per question Q1--Q4 with the number of execution-gate retries, the number of validation iterations, and the size of the retrieved result in rows and in distinct graph nodes.
 
+% TODO introduce the grading process, introduce the datapoints level, and information points level
+%Grading is automated.
+%Each generated configuration is parsed into a canonical element structure defined per platform and aligned to ground truth by canonical path and semantic role, so that ordering differences inside an order-independent block are equivalent, and values are compared with identifier case and whitespace ignored, platform identifiers canonicalised, and numeric values compared within a fixed tolerance.
+%An element that fails canonical alignment counts as unmatched.
+%Every cell of the design is run three times with a fixed decoding configuration, and the reported figure is the mean over the repetitions.
+%Because each case is solved under every condition and model, the comparisons are paired: accuracy between P and each baseline with paired tests and bootstrap confidence intervals, success rate with the McNemar test, at a Holm-corrected threshold of 0.05.
+
+\subsection{Base case: ten-room building} % TODO change the subsection title
+Table~\ref{tab:base} reports E1 on the ten-room building with the 31B variant.
+It is read for the gap between P and the two full-context baselines in accuracy, and for the cost at which that gap is obtained, since P issues several retrieval calls where a baseline issues one.
+\emph{[PH: statement of the observed gap and its direction, once the runs are exported.]}
+
+% TODO show both datapoints level and information points level.
+% TODO dont need to show f1 score
 \begin{table}[t]
-\caption{Error taxonomy by condition. \emph{[PLACEHOLDER --- all cells to be filled after experiment.]}}
-\label{tab:errors}
+\caption{Experiment E1, ten-room building, Gemma 4 31B. Deployment accuracy, success rate (SR), prompt tokens and latency per case}
+\label{tab:base}
 \centering\footnotesize
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{@{}p{2.3cm}p{3.2cm}ccc@{}}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{1.9cm}cccc@{}}
 \toprule
-Error category & Description & B1 & B2 & P \\
+Condition & P / R / F1 & SR & kTok & s \\
 \midrule
-Wrong strategy & Strategy does not match sensor availability & [PH] & [PH] & [PH] \\
-Missing element & Ground-truth element not generated (recall loss) & [PH] & [PH] & [PH] \\
-Spurious element & Generated element absent from ground truth (precision loss) & [PH] & [PH] & [PH] \\
-Invalid binding & Point/device referenced incorrectly & [PH] & [PH] & [PH] \\
-Platform-syntax error & Output violates the interface grammar & [PH] & [PH] & [PH] \\
-Other & Residual errors not covered above & [PH] & [PH] & [PH] \\
+B1 raw metadata & [PH] & [PH] & [PH] & [PH] \\
+B2 knowledge graph & [PH] & [PH] & [PH] & [PH] \\
+P GraphRAG & [PH] & [PH] & [PH] & [PH] \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Statistical analysis}
-The design is paired: every case is solved under each condition and model tier. Precision and recall are compared between P and each baseline with paired tests appropriate to the measure, and bootstrap confidence intervals are reported for the aggregate figures because element-level scores are not normally distributed. Strategy correctness, where binary, is compared with the McNemar test on matched pairs. The model-tier comparison is reported as the P-minus-baseline accuracy gap for the mid-size and the larger model, so that the narrowing claim can be read directly: if the gap is smaller under P than under B1 and B2, the graph is substituting for model scale. Significance thresholds (0.05) and a Holm correction across the pairwise comparisons are fixed in advance.
+% TODO analyse the results
+%  1) Datapoint identification is trivial
+%  2) For complete configuration, information point B1 does not work well
+%  3) Sorting the information into KG already provides strong support for LLM, boosting the performance, although recall still not reaching 100%
+%  4) GraphRAG manages to reach perfect performance.
+%  5) Platform specific evaluation?
 
-\subsection{Threats to validity and controls}
-Three threats are controlled by design. Circularity: ground truth is authored independently of the graph schema, so grading cannot reward the pipeline for reproducing its own encoding. Generator confounding: the three conditions share the generator within each model tier, so context selection is isolated. Task narrowness: the evaluation covers demand-based HVAC controller deployment across two platforms, and this boundary is stated so that results are not over-generalised. A residual threat is expert variation in ground truth; where more than one expert authors a case, their agreement is recorded and disagreement is treated as a documented case attribute.
+% TODO figure show case the visited graphs
+Figure~\ref{fig:subgraph_visits} makes the retrieval behaviour of a single deployment visible.
+For each of the four requirement-oriented questions it shows the part of the building graph that the generated SPARQL query touches, overlaid on the full graph of the ten-room building.
+The four subgraphs narrow in sequence, from the rooms of the building in Q1 to the API bindings of the selected data points in Q4, and their union is the context that condition P hands to the deployment step, which is a small fraction of what B2 supplies.
+
+\begin{figure}[t]
+\centering
+% TODO replace the placeholder box with \includegraphics[width=\linewidth]{img/evaluation/subgraph_visits}
+\framebox[\linewidth][c]{\parbox[c][4.2cm][c]{0.92\linewidth}{\centering\emph{[FIGURE PLACEHOLDER: visited subgraph per question Q1--Q4 of one deployment on the ten-room building, overlaid on the full graph]}}}
+\caption{Subgraphs visited by the generated queries for Q1--Q4 during one deployment on the ten-room building, shown against the full knowledge graph}
+\label{fig:subgraph_visits}
+\end{figure}
+
+\subsection{Scaling: building size and model capacity} % TODO change the subsection title
+Table~\ref{tab:scaling} reports E2 as a full factorial of the three conditions, the three models, and the four building sizes.
+
+% TODO short models introduction
+Three instruction-tuned variants of the Gemma 4 family \citep{gemmaTeam2026gemma4} are used, all served locally through the same runtime and the same decoding settings: the dense 31B variant with 30.7 billion parameters, the mixture-of-experts variant 26B A4B with 25.2 billion total and 3.8 billion active parameters, and the dense 12B variant with 11.95 billion parameters.
+All three expose a context window of 256K tokens.
+
+% TODO show the results plot, f1 only, platform-separate or combined?
 
 
-\section{Discussion}
+
+
+\subsection{Error analysis} % TODO change the subsection title
+% TODO some insight regarding graphRAG method
+%   (What is this phenomenon call?) LLM's comprehensive/intelligence could change dramatically, even if only a single ID is changed over the entire prompt. This impact of the ID change is validated through repetition. For example, FIWARE-80-rooms case perform much better than the FIWARE-100-rooms case, with the only difference in prompt being the ID of the target room. Such phenomenon can be observed in all considered models.
+%   The SPARQL generation and information retrieval is the most important and critical step in the GraphRAG approach. Almost all error can be attributed to this step.
+%   There are some typical errors observed during the development and evaluation: Hallucinated class or property names, Hallucinated wrong target object IRI, SPARQL syntax wrong, Class/Instance misunderstanding
+
+\section{Discussion} % TODO Whether keep this section? Or turn it to subsection like Summary
 \label{sec:discussion}
-% TODO check whether needed
-%\textbf{Why not fine-tuning.} Fine-tuning adapts the model's weights to a distribution of configurations but does not give it access to the specific device and point state of the space at deployment time. Space-level deployment is instance-level: the correct configuration depends on which points are actually present, and that varies per space. A fine-tuned model would still need the current metadata supplied at inference, which returns the problem to context assembly (the very thing being evaluated) while adding training cost and freezing the platform grammar at training time. Conditioning a general model on a freshly generated subgraph keeps the configuration current and lets the pipeline track platforms as they change.
-
 % TODO show it be a summary of the answer to all research questions?
 
 
@@ -467,6 +472,12 @@ Three threats are controlled by design. Circularity: ground truth is authored in
 \label{sec:limitations-conclusion}
 % TODO real-time ability
 The principal limitations are scope and evidence scale. The evaluation covers two platforms and one task family, demand-based HVAC controller deployment; results will not establish the automation of building systems in general, and this boundary is stated so that they are not over-generalised. The graph's quality is bounded by the metadata the platforms expose, so missing or mislabelled points propagate into the graph and the configuration, which the incompleteness arm probes but does not fully resolve. Ground truth depends on expert judgement, and while independence from the graph schema controls the circularity threat, expert variation remains a documented source of uncertainty. Finally, the study is human-supervised: generated configurations are reviewed before application, so any effort saving is measured against a review-inclusive workflow, not a fully autonomous one.
+
+%\subsection{Limitations} TODO check duplication
+%Ground truth is authored independently of the T-box, so grading cannot reward the pipeline for reproducing its own encoding.
+%The deployment step is identical across the three conditions, so the comparison isolates context assembly rather than generation.
+%The buildings beyond ten rooms are generated rather than observed, which controls size and sensor availability but reproduces the topology of two installations only, so the scaling result holds for buildings of that structure.
+%The study covers one task family on two platforms with one open-weight model family, and the absence of a proprietary model means that the claim of this paper is about the viability of local models rather than about parity with a larger hosted one.
 
 Within those limits, the paper's finding is that a GraphRAG pipeline over knowledge graphs generated from live IoT platform metadata automates demand-based HVAC controller deployment, outperforming full-context baselines supplied with raw metadata or with the whole graph, and enabling mid-size models to match a larger model. The result supports three contributions: the automatic graph generation method (C1), the retrieval and generation pipeline (C2) as the load-bearing contribution, and the cross-platform evaluation (C3). Two questions remain open: whether graph generation generalises to platforms whose metadata exposes no usable typing, and whether the accuracy advantage persists when the task is raised from a single space to floor or building level, where the retrieved subgraph must span more spaces. The practical implication is that structure supplied by an automatically derived graph can substitute for model scale, which lowers the cost of deploying cross-platform building services on local models.
 
