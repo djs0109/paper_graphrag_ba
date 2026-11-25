@@ -3,18 +3,20 @@
 %
 % =====================================================================
 % Enabling Automated Controller Deployment in IoT-Enabled Building Systems with GraphRAG
-% Target: 2026 European Conference on Computing in Construction (EC3), 8 pages, two-column.
-% Adapted from paper/paper.tex to the official EC3_2026 template.
+% Target: 2027 European Conference on Computing in Construction (EC3) & 44th CIB W78, 6-8 pages, two-column.
+% Aligned with the official EC3_2027 template (template/EC3_2027/format_guide.tex).
 % Citation style: Harvard author-date via natbib, apalikenonitalic.bst
 % =====================================================================
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % EC3 Latex template
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% TODO change to double column
-\documentclass[twocolumn, 10pt, A4paper]{article}
+\documentclass[twocolumn, 10pt, a4paper]{article}
 
-\usepackage{fontspec}
+% Maths fonts are loaded before fontspec, and fontspec is told not to touch maths (no-math)
+\usepackage{amsmath}
+\usepackage{newtxmath} % Times-style maths; already provides the amssymb symbols
+\usepackage[no-math]{fontspec}
 \setmainfont[
   UprightFont    = {Times New Roman},
   ItalicFont     = {Times New Roman Italic},
@@ -26,16 +28,13 @@
 \usepackage{geometry}
 \geometry{ a4paper, total={170mm,257mm}, top=25mm, left=20mm, }
 
-\usepackage{amssymb}
-\usepackage{newtxmath} % optional, for math
 \usepackage[justification=centering]{caption}
 
 \usepackage{enumitem}% To reduce separation between bullets or itemized lists
-% Use with [noitemsep]EC3_2026
+% Use with [noitemsep]
 
 \usepackage{natbib}
 
-\usepackage{amsmath}
 \usepackage{epsfig}
 \usepackage{graphicx}
 \usepackage{vmargin}
@@ -44,7 +43,6 @@
 \usepackage{boxedminipage}
 \usepackage{booktabs}% rules used by the manuscript tables
 
-\usepackage{newtxtext}%This package is needed for bold and Italic fonts.
 
 \usepackage{lastpage} % for the number of the last page in the document
 \usepackage{fancyhdr}
@@ -94,7 +92,8 @@
 \setlength{\textheight}{241mm}
 \setlength{\hoffset}{-40.5mm}
 \setlength{\footskip}{12pt}
-\setlength{\parindent}{5mm}% EC3 guide: first paragraph line indented 5 mm
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{3pt} % 3 pt space before each paragraph (EC3 2027 template)
 \setlength{\columnsep}{8mm}
 \setcounter{secnumdepth}{-2} % headings are not numbered
 
@@ -137,9 +136,10 @@
 \renewcommand\subsubsection{\@startsection{subsubsection}{1}{\z@}{6pt}{3pt}{\normalfont\normalsize\itshape}}
 \makeatother
 
-\renewcommand\refname{}
+\renewcommand\refname{References}
+\setlength{\bibsep}{8pt}
 
-\newcommand{\authorfont}{\fontsize{11}{14}\selectfont}
+\newcommand{\authorfont}{\fontsize{12}{14}\selectfont}
 \newcommand{\titlefont}{\fontsize{12}{14}\selectfont \bf}
 \newcommand{\headerfont}{\fontsize{10}{11}\selectfont}
 \newcommand{\smallsmall}{\fontsize{3}{3}\selectfont}
@@ -163,25 +163,25 @@
   % Left logo: bottom aligned, flush left, no inner padding
   \fancyhead[L]{%
     \begin{tabular}[b]{@{}l@{}}
-%      \includegraphics[height=1.8cm, trim={0 0.1cm 0 0}, clip]{img/LogoJPG.JPG}
-      \includegraphics[height=1.8cm]{img/2027ec3}
+      \includegraphics[height=1.78cm]{img/2027ec3.png}
     \end{tabular}
   }
 
   % Center text: bottom aligned, centered
-  % TODO
-%  \fancyhead[C]{%
-%    \begin{tabular}[b]{c}
-%      2026 European Conference on Computing in Construction \\
-%      Corfu, Greece \\
-%      July 12--15, 2026
-%    \end{tabular}
-%  }
+  \fancyhead[C]{%
+    \begin{tabular}[b]{c}
+      2027 European Conference on Computing in Construction \\
+      44\textsuperscript{th} CIB W78 Conference on IT in Construction \\
+      Thessaloniki, Greece \\
+      July 11–14, 2027
+    \end{tabular}
+  }
 
   % Right logo: bottom aligned, flush right, no inner padding
   \fancyhead[R]{%
     \begin{tabular}[b]{@{}r@{}}
-      \includegraphics[height=1.45cm, trim={0 0.1cm 0 0}, clip]{img/EC3_LOGO_2.png}
+      \includegraphics[height=1.21cm]{img/CIB_logo.pdf}\hspace{1.6mm}%
+      \raisebox{1.4mm}{\includegraphics[height=1.07cm]{img/EC3_LOGO_2.png}}
     \end{tabular}
   }
 }
@@ -192,6 +192,15 @@
 %\authorfont{Junsong Du$^1$, Rita Streblow$^1$, and Dirk Müller$^2$}\\
 %\authorfont{$^1$RWTH Aachen University, Aachen, Germany}\\
 %\authorfont{\texttt{junsong.du@eonerc.rwth-aachen.de}}\\
+\authorfont{Author1$^1$, Author2$^1$, and Author3$^2$}\\
+\authorfont{$^1$Institute of the authors}\\
+\authorfont{\texttt{example@example.com}}\\
+% Names and affiliations MUST NOT be included in the draft submitted for review.
+% Header block = 10 lines at exactly 14 pt; unused lines are left blank (as in the EC3 2027 template).
+% TODO count the number of lines and add empty lines manually
+\authorfont{~}\\
+\authorfont{~}\\
+\authorfont{~}\\
 \authorfont{~}\\
 \authorfont{~}\\
 \vspace{-15mm}
@@ -203,13 +212,19 @@
 \setul{2pt}{0.25pt}
 \section*{Abstract}
 
-Internet of Things (IoT) platforms are increasingly used to enhance building systems with real-time data and interaction capabilities.
-However, the heterogeneity of existing IoT platforms and underlying building systems forces applications like demand-based HVAC control to be re-engineered for each deployment, which is commonly referred to as the cross-platform interoperability problem.
-This paper presents a GraphRAG pipeline that automates controller deployment in IoT-enabled building systems using generated knowledge graphs (KGs).
-The pipeline prompts a large language model (LLM) to retrieve deployment-relevant context from the graph and to generate a detailed controller configuration for a given target space for a specific IoT platform.
-We validate the pipeline on two distinct IoT platforms, FIWARE and ioBroker, and compare it against two full-context LLM baselines supplied with raw metadata and with full KGs respectively.
-Deployment accuracy is measured as precision and recall against expert-authored ground truth.
-Results show that the GraphRAG pipeline outperforms both baselines, and it also enables local mid-size models (the Gemma4 family) to match the performance of a larger model (Gemini).
+% EC3 2027: abstract max. 100 words. Draft condensed version; previous abstract kept below as a comment.
+Building controllers such as demand-based HVAC control must still be re-engineered for each Internet of Things (IoT) platform, and supplying large language models (LLMs) with raw platform metadata or entire knowledge graphs (KGs) loses deployment-relevant information as buildings grow.
+We present a GraphRAG pipeline that retrieves deployment context from KGs generated from platform metadata and generates platform-specific controller configurations.
+Evaluated on FIWARE and ioBroker against expert-authored ground truth, the pipeline outperforms both full-context baselines and enables local mid-size Gemma4 models to match a larger model (Gemini).
+This provides a platform-agnostic path towards automated controller deployment.
+
+% Internet of Things (IoT) platforms are increasingly used to enhance building systems with real-time data and interaction capabilities.
+% However, the heterogeneity of existing IoT platforms and underlying building systems forces applications like demand-based HVAC control to be re-engineered for each deployment, which is commonly referred to as the cross-platform interoperability problem.
+% This paper presents a GraphRAG pipeline that automates controller deployment in IoT-enabled building systems using generated knowledge graphs (KGs).
+% The pipeline prompts a large language model (LLM) to retrieve deployment-relevant context from the graph and to generate a detailed controller configuration for a given target space for a specific IoT platform.
+% We validate the pipeline on two distinct IoT platforms, FIWARE and ioBroker, and compare it against two full-context LLM baselines supplied with raw metadata and with full KGs respectively.
+% Deployment accuracy is measured as precision and recall against expert-authored ground truth.
+% Results show that the GraphRAG pipeline outperforms both baselines, and it also enables local mid-size models (the Gemma4 family) to match the performance of a larger model (Gemini).
 
 \vspace{0.5em}
 \noindent\textbf{Keywords:} GraphRAG; knowledge graph; building automation; IoT platforms; large language models
@@ -244,7 +259,7 @@ By comparing against two full-context baselines and employing LLMs of different 
 
 
 % TODO rewrite the paper structure introduction
-In the rest of this paper, Section~\ref{sec:related-work} reviews existing literature to contextualize our work, Section~\ref{sec:problem-formulation} specifies the deployment task within the cross-platform environment, Section~\ref{sec:method} details the proposed GraphRAG pipeline, Section~\ref{sec:evaluation} presents the evaluation design and results, Section~\ref{sec:discussion} discusses the findings, and Section~\ref{sec:limitations-conclusion} concludes the paper with limitations and future work.
+In the rest of this paper, the Related Work section reviews existing literature to contextualize our work, the Problem Formulation section specifies the deployment task within the cross-platform environment, the Method section details the proposed GraphRAG pipeline, the Evaluation section presents the evaluation design and results, the Discussion section discusses the findings, and the final section concludes the paper with limitations and future work.
 
 \section{Related Work}
 \label{sec:related-work}
@@ -291,7 +306,7 @@ RQ2: does GraphRAG-based building automation show resilience against increasing 
 % TODO The FIWARE and ioBroker test environment
 
 \subsection{Task and test buildings}
-The task is the demand-based HVAC controller deployment problem of Section~\ref{sec:problem-formulation}.
+The task is the demand-based HVAC controller deployment problem defined in the Problem Formulation and System Overview section.
 A deployment case names one target room and one platform and asks for a control strategy and an executable configuration.
 The number of rooms in the building is therefore the volume of metadata that has to be searched, not the number of configurations to be produced, which keeps the output of a case constant while the retrieval problem grows.
 
@@ -548,9 +563,6 @@ The practical implication is that deployment context derived automatically from 
 \section*{Data Availability Statement}
 The metadata extraction tooling, the knowledge graph generation scripts, the GraphRAG pipeline, and the evaluation harness will be released in a public repository upon publication. Because the cases are derived from building installations, raw platform metadata will be released in a de-identified and, where required, synthetically equivalent form; source code and the evaluation protocol will be openly available without restriction. Ground-truth configurations will be released alongside the de-identified cases.
 
-\section*{AI-Use Disclosure Statement}
-AI tools were used in the preparation of this manuscript for research assistance and drafting. Specifically, AI-assisted tooling supported literature discovery and metadata verification for the reference corpus, and AI-assisted drafting was used to produce and revise prose under human direction. All technical design decisions, the task definition, the evaluation protocol, the ground-truth authoring requirements, and the interpretation of the work are the responsibility of the authors. The authors reviewed and edited all AI-assisted content and take full responsibility for the final text.
-
 \section*{Author Contributions (CRediT)}
 [Author A]: Conceptualization, Methodology, Software, Writing -- original draft. [Author B]: Investigation, Data curation, Validation, Writing -- review and editing. [Author C]: Supervision, Project administration, Funding acquisition, Writing -- review and editing. [Placeholder author names and roles to be confirmed before submission.]
 
@@ -561,7 +573,10 @@ The authors declare no conflict of interest.
 This work was supported by [Funder Name] under grant [Grant Number]. [Placeholder: funding details to be confirmed before submission.]
 
 
-\section*{References}
+\section*{Use of generative AI tools declaration}
+During the preparation of this paper, the authors used Claude Science to assist with research planning, drafting, and language editing.
+After using this tool, the authors reviewed and edited the content as needed and take full responsibility for the content of the published article.
+
 \bibliography{paper}
 
 \end{document}
