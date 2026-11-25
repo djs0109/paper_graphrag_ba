@@ -460,7 +460,8 @@ Figure~\ref{fig:scaling} reports the information-point F1 of all 144 cells, whic
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=\textwidth]{img/evaluation/scaling_infopoint_f1_by_model}
+\includegraphics[width=\textwidth]{img/evaluation/scaling_infopoint_f1_by_condition}
+% TODO update caption?
 \caption{Experiment E2, information-point F1 over building size per platform and model, mean over the successful runs of three. Filled markers denote three successful runs and hollow markers fewer, with the share annotated; crossed markers denote cells without a successful run, which are scored 0}
 \label{fig:scaling}
 \end{figure*}
@@ -482,15 +483,19 @@ The 26B A4B variant, which activates fewer parameters per token than the 12B var
 On FIWARE, P with the 26B A4B variant outperforms every baseline of the 31B variant at every building size.
 
 \subsection{Error analysis of the retrieval stage}
-All 39 failed runs of P end in the retrieval loop, and none in the deployment step, so SPARQL generation is the critical step of the pipeline.
+All 39 failed runs of GraphRAG end in the retrieval loop, and none in the deployment step, so SPARQL generation is the critical step of the pipeline.
 Four recurring error types were observed during development and evaluation.
-First, the model hallucinates vocabulary from its prior knowledge of Brick, for example \texttt{brick:Building}, which has been superseded and is absent from the T-box view, where the graph uses \texttt{rec:Building}.
-Second, it alters the IRI of the target room, for example by dropping a path segment of the ioBroker object identifier, so that the query matches no node.
-Third, it writes invalid SPARQL, such as a comparison of a variable with an IRI written as a triple pattern, which occurs more often with the smaller models.
-Fourth, it confuses classes and instances: a T-box edge stating that a command point has an \texttt{http:Request} as value is turned into a pattern that requires the class \texttt{http:Request} itself as the value.
-The first two types were mitigated by prompt rules that require strict vocabulary and IRI grounding, and the fourth by a rule with an example of how to read the T-box view.
-Syntax errors remain unresolved and persist even though the parser message is fed back, and they are a likely cause of the failures of the 12B variant at Q4.
-A further observation is that the outcome of a run can change noticeably when only the identifier of the target room changes in an otherwise identical prompt, which repeated runs confirmed for all models; since each building size of E2 uses a different target room, part of the variation between neighbouring sizes in Figure~\ref{fig:scaling} reflects this sensitivity rather than the size of the building.
+% TODO if space left. Show concrete examples.
+First, the LLMs hallucinate vocabulary from its prior knowledge of Brick, for example \texttt{brick:Building}, which has been superseded and is absent from the T-box view, where the graph uses \texttt{rec:Building}.
+Second, they alter the IRI of the found target room, for example by dropping a path segment of the ioBroker object identifier, so that the query matches no node.
+Third, they confuse classes and instances: a T-box edge stating that a command point has an instance of \texttt{http:Request} as value is turned into a pattern that requires the class \texttt{http:Request} itself as the value.
+Fourth, they write invalid SPARQL, such as a comparison of a variable with an IRI written as a triple pattern, which occurs more often with the smaller models.
+The first two types can be largely mitigated by prompt rules that require strict vocabulary and IRI grounding, and the third by a rule with an example showing how to read the T-box view.
+However, syntax errors remain unresolved and persist for smaller models.
+Approaches, such as forwarding error message from SPARQL endpoint and requiring syntax validation, are tested, but no significant improvement can be observed.
+
+% TODO check how to phrase this below? or remove?
+% A further observation is that the outcome of a run can change noticeably when only the identifier of the target room changes in an otherwise identical prompt, which repeated runs confirmed for all models; since each building size of E2 uses a different target room, part of the variation between neighbouring sizes in Figure~\ref{fig:scaling} reflects this sensitivity rather than the size of the building.
 
 \section{Discussion} % TODO Whether keep this section? Or turn it to subsection like Summary
 \label{sec:discussion}
@@ -499,6 +504,7 @@ A further observation is that the outcome of a run can change noticeably when on
 
 \section{Limitations and Conclusion}
 \label{sec:limitations-conclusion}
+% TODO phrase enabling smallest models to correctly perform graph query will be interesting. Balance needs to be found to sacrifice query flexibility and the query validity.
 % TODO real-time ability
 The findings are subject to the following limitations.
 First, the scope is narrow: two platforms, one task family (demand-based HVAC controller deployment), and one open-weight model family. The results do not establish the automation of building systems in general.
