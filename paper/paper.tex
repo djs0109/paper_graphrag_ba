@@ -231,34 +231,30 @@ This provides a platform-agnostic path towards automated controller deployment.
 
 \section{Introduction}
 \label{sec:introduction}
-% TODO this section is generated. Must be critically reviewed
-%Room-level controller deployment in IoT-enabled buildings is a configuration problem before it is a hardware problem. Once sensors, actuators, and gateways are physically installed, the remaining effort is cognitive and clerical: an engineer reads the available points, decides which control strategy they can support, and encodes that decision into the data-interface syntax of the target platform. Commissioning is a sizeable recurring expense in building projects. \citet{crowe2020building}, analysing outcomes across 1,500 North American buildings, report median commissioning costs (2020 US dollars) of USD 2.85/m$^2$ for existing buildings and USD 8.78/m$^2$ for new construction, alongside energy savings that justify the expenditure. The cost sits largely in the labour of mapping intent to concrete device and point configurations, not in the devices themselves.
-%
-%That labour scales with heterogeneity. A building may expose its data through a standards-oriented middleware such as FIWARE, whose NGSI-LD information model is designed for cross-domain interoperability \citep{bauer2022fiware}, or through a lightweight, vendor-neutral automation platform of the class that \citet{setz2021comparison} review, to which ioBroker belongs. The two ecosystems describe comparable physical reality with incompatible object models, naming conventions, and interface syntax. The consequence is that configuration logic rarely ports between platforms, and reuse is blocked at the point where it would save the most effort. \citet{fierro2020shepherding} show that even within a single building's lifecycle the digital representations (gbXML, BuildingSync, Project Haystack, and others) fail to interoperate at semantic, structural, and syntactic levels, so metadata must be continually reconstructed rather than inherited.
-%
-%The building community has responded with structure. Brick \citep{balaji2018brick}, RealEstateCore \citep{hammar2019realestatecore}, and the W3C SSN ontology \citep{compton2012ssn} provide rigorous vocabularies for asserting what a sensor is, where it sits, and what it measures. These vocabularies resolve naming ambiguity in principle. In practice, their instantiation against a real building remains a manual task, which \citet{pritoni2021metadata} describe as difficult, labour-intensive, and costly, and which \citet{qian2026brickdicl} address only partially by automating point classification. A coded ontology in a file does not, by itself, produce a running controller. What is missing is a mechanism that reads the platform as it actually is, expresses it in a form that preserves the relations a configuration depends on, and generates the configuration from that form. The obstacle is representational rather than conceptual.
-%
-%A parallel line of work automates generation using LLMs, but the dominant retrieval designs are structurally blind. Retrieval-augmented generation \citep{lewis2020retrieval} retrieves flat passages and conditions generation on them, which works when answers live in self-contained text. Controller configuration does not: it requires composing a decision across a space, its devices, their points, and a platform binding table, where the relevant facts are relational rather than lexical. Full-context prompting is a tempting alternative, but \citet{liu2024lost} show that LLM accuracy degrades when relevant information sits in the middle of a long input, so packing an entire platform into the prompt is unreliable. Graph-based retrieval \citep{edge2024local,peng2025graphragsurvey} preserves relations by construction, yet it has not been applied to the generation of deployable, platform-specific configuration artifacts.
-%
-% TODO the contributions already here in introduction?
-%This paper presents a GraphRAG pipeline that automates demand-based HVAC controller deployment using knowledge graphs generated from live IoT platform metadata, and shows on two heterogeneous platforms that it outperforms full-context LLM baselines.
-We make two contributions.
-First, we tailor GraphRAG into an automated controller deployment pipeline for building systems, in which an LLM retrieves task-relevant context by generating SPARQL queries.
-Retrieval reliability is reinforced through self-reflective validation and prompt rules for vocabulary and IRI grounding, while a separate generation step compiles the retrieved context into an executable controller configuration.
-Second, we evaluate this pipeline on simulated building systems connected to the FIWARE and ioBroker platforms.
-By comparing against two full-context baselines and employing LLMs of different sizes, we demonstrate the robustness and find limitations of the proposed GraphRAG pipeline.
+Room-level controllers such as demand-based heating, ventilation, and air conditioning (HVAC) control can make better use of sensors and actuators that are already installed in a building.
+In IoT-enabled buildings, these devices are exposed through platforms such as FIWARE or ioBroker, each with its own data model, naming conventions, and interface syntax.
+A controller developed for one platform must therefore be re-engineered for every deployment: an engineer identifies the relevant data points of each room, checks whether they support the control strategy, and binds them to the platform interfaces.
+This cross-platform interoperability problem keeps deployment effort proportional to the number of rooms and platforms.
 
+Two developments make automating this step feasible.
+Semantic web technologies can lift heterogeneous platform metadata into knowledge graphs (KGs) with a shared vocabulary, and large language models (LLMs) can interpret such graphs and produce structured output.
+Combining the two is not trivial, because supplying an LLM with the raw metadata or the entire KG loses deployment-relevant details as buildings grow.
+We therefore investigate whether GraphRAG, in which the LLM retrieves from a generated KG only the context needed for one target space, can make controller deployment platform-agnostic.
+Figure~\ref{fig:abstract} contrasts the manual, platform-specific deployment with the proposed pipeline.
 
-% TODO introduce the overview figure
-\begin{figure}[h]
+\begin{figure}[ht]
     \centering
     \includegraphics[width=\linewidth]{img/abstract}
     \caption{Overview of the underlying problem and the proposed GraphRAG pipeline}
     \label{fig:abstract}
 \end{figure}
 
+Specifically, we make two contributions.
+First, we tailor GraphRAG into an automated controller deployment pipeline for building systems, in which an LLM retrieves task-relevant context by generating SPARQL queries.
+Retrieval reliability is reinforced through self-reflective validation and prompt rules for vocabulary and IRI grounding, while a separate generation step compiles the retrieved context into an executable controller configuration.
+Second, we evaluate this pipeline on simulated building systems connected to the FIWARE and ioBroker platforms.
+By comparing against two full-context baselines and employing LLMs of different sizes, we demonstrate the robustness and find limitations of the proposed GraphRAG pipeline.
 
-% TODO rewrite the paper structure introduction
 In the rest of this paper, the Related Work section reviews existing literature to contextualize our work, the Problem Formulation section specifies the deployment task within the cross-platform environment, the Method section details the proposed GraphRAG pipeline, the Evaluation section presents the evaluation design and results, the Discussion section discusses the findings, and the final section concludes the paper with limitations and future work.
 
 \section{Related Work}
@@ -381,7 +377,7 @@ The main errors are missing or wrong API information, leading to unsuccessful de
 
 \section{Evaluation}
 \label{sec:evaluation}
-The evaluation is organised into two experiments that share one deployment task, one set of test buildings, and the open-weight models of the Gemma~4 family~\citep{gemmaTeam2026gemma4}.
+The evaluation is organised into two experiments that share one deployment task, one set of test buildings, and the open-weight models of the Gemma~4 family.
 Experiment~E1 fixes the building size at ten rooms and the local model at the largest variant (31B), comparing the three context strategies to answer RQ1.
 Experiment~E2 scales the building from ten to one hundred rooms and varies the local model from 31B down to 12B across all three context strategies to answer RQ2.
 Both experiments additionally include Gemini~3.6~Flash (medium thinking level, evaluated on 25~November~2026) as a frontier reference model from the same lineage, testing whether local models match the accuracy of a larger model.
