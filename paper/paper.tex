@@ -330,9 +330,10 @@ This paper reuses the KGCP for the two target platforms, FIWARE and ioBroker.
 Besides the existing functions, we further extend the KGCP with a post-processing module to add information about the platform-specific API syntax to the generated KGs by traversing all endpoints nodes and matching them with the corresponding API syntax in the platform specification (swagger or OpenAPI document).
 
 KGs of both platforms are mapped onto the common T-box shown in Figure~\ref{fig:t-box-building-http}, which fixes the vocabulary that the retrieval stage.
+% TODO make it show in the previous page?
 \begin{figure*}[ht]
     \centering
-    \includegraphics[width=\textwidth]{img/method/T-box-building-http}
+    \includegraphics[width=0.9\textwidth]{img/method/T-box-building-http}
     \caption{Common T-box of the generated KGs, covering devices and spaces, data points and commands, and platform-specific API information. Dashed boxes denote literal values}
     \label{fig:t-box-building-http}
 \end{figure*}
@@ -351,7 +352,7 @@ The prompt further fixes query constraints and rules, which prohibit syntax that
 Since the query is bounded by the task rather than by a hop radius, it reaches the API binding of a data point several relations away from the space without adding the irrelevant neighbourhood that a correspondingly large $k$ would pull in.
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=\linewidth]{img/method/graphrag_retrieval_validation_vertical}
+    \includegraphics[width=0.9\linewidth]{img/method/graphrag_retrieval_validation_vertical}
     \caption{Prompt structures and workflow of the validation enhanced information retrieval.}
     \label{fig:graphrag_retrieval_validation_vertical}
 \end{figure}
@@ -461,8 +462,9 @@ Even summed across all four queries, only a small fraction of the full KG suppli
     \label{fig:visited_triples_10rooms}
 \end{figure}
 
-In summary, answering RQ1 on the ten-room building, GraphRAG is the only context strategy that yields fully executable configurations across both platforms and models.
-Whereas the local Gemma~4~31B model trails Gemini~3.6~Flash under both full-context baselines, GraphRAG closes this gap completely while inspecting only a small fraction of the KG.
+In summary, answering RQ1, GraphRAG enables automated cross-platform controller deployment on the ten-room building.
+It is the only context strategy that yields fully executable configurations across both FIWARE and ioBroker.
+Whereas the local-capable Gemma~4~31B model trails Gemini~3.6~Flash under both full-context baselines, GraphRAG closes this gap completely while inspecting only a small fraction of the KG.
 
 \subsection{Scaling with building size and model capacity}
 E2 repeats the deployment task of a target room for buildings of 10, 20, 40, 60, 80, and 100 rooms.
@@ -470,55 +472,57 @@ Three variants of the Gemma 4 family are used : the dense 31B variant, the mixtu
 The 12B and 26B variants are served locally and the 31B variant through a hosted endpoint, all with the same decoding settings\footnote{For all Gemma 4 models, the context is configured to 256 k tokens, and the default generation parameters are applied (temperature = 1.0, top\_p = 0.95, top\_k = 64).}.
 As the reference frontier model, the Gemini 3.6 Flash is used, but the task is restricted to the 10-, 40-, and 100-room buildings to save costs.
 Since the data-point task has been proven to be trivial, only the information-point is further evaluated.
-Figure~\ref{fig:scaling} reports the information-point F1 of the 108 cells of the Gemma 4 variants, which comprise 324 runs, together with the 18 cells of the reference model at 10, 40, and 100 rooms.
+Figure~\ref{fig:scaling} reports the information-point F1 score across all 378 runs, comprising 108 settings for the Gemma~4 variants and 18 for Gemini~3.6~Flash, each repeated three times
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=\textwidth]{img/evaluation/scaling_infopoint_f1_by_condition}
+\includegraphics[width=0.9\textwidth]{img/evaluation/scaling_infopoint_f1_by_condition}
 \caption{Experiment E2, information-point F1 over building size per platform and condition for three Gemma 4 variants and the reference model Gemini 3.6 Flash, which is evaluated at 10, 40, and 100 rooms only; mean over the successful runs of three.}
 \label{fig:scaling}
 \end{figure*}
 
-With the 31B and 26B variants, P is insensitive to building size.
-The 31B variant reaches an F1 of 1 at every size on both platforms, with all 36 runs successful, and the 26B variant stays between 0.89 and 0.99 with 34 of 36 runs successful.
+% main insights
+%   - GraphRAG shows robustness against data volume, while the other not always
+%   - GraphRAG let smaller frontier models to match the performance of frontier model
+%   - GraphRAG has a clear model capacity floor. Performance will drop dramatically.
+Under GraphRAG~(P), deployment accuracy is invariant to building scale for the two larger local models.
+Gemma~4~31B maintains an information-point F1 of 1.00 across all building sizes from 10 to 100~rooms on both FIWARE and ioBroker with zero failed runs, matching Gemini~3.6~Flash at every evaluated scale.
+The 26B variant exhibits the same scale stability: it stays between 0.89 and 0.97 on FIWARE and between 0.90 and 0.99 on ioBroker up to 100~rooms, with only two isolated run failures across all 36~runs (2/3~successful at 100~rooms on FIWARE and at 10~rooms on ioBroker).
+By contrast, Gemma~4~12B marks a clear lower capacity bound for the GraphRAG workflow.
+It suffers frequent run failures on both platforms and produces erratic F1 scores (0.00--0.87) even when runs complete.
 
-The full-context baselines degrade in two distinct ways.
-B1 never fails, but its F1 is bounded by the missing headers already seen in E1 and stays between 0.41 and 0.90 at every size, largely independent of the building.
-B2 is competitive on small buildings, for example with an F1 of 1 for the 31B variant on ioBroker up to 60 rooms, but it collapses as the graph grows.
-On FIWARE, the F1 of the 26B variant drops from 0.97 at 10 and 20 rooms to between 0.20 and 0.43 from 60 rooms on.
-Part of this drop comes from runs that return a configuration without any controller, which happens in 8 B2 runs of the 12B and 26B variants at 60 rooms and more, and a further 6 B2 runs of these variants end without a configuration.
-The prompts of the 31B variant exceed the context limit of its endpoint from 60 rooms on FIWARE and from 80 rooms on ioBroker, so that 15 of its 36 B2 runs fail.
+Supplying the full KG~(B2) reveals a pronounced scaling collapse for all local models.
+While Gemini~3.6~Flash sustains an F1 of 1.00 up to 100~rooms on both platforms, every Gemma~4 variant degrades sharply once the building grows beyond an intermediate size.
+On FIWARE, the breakdown occurs at 60~rooms: both 31B and 12B drop to an F1 of 0.00 from 60 to 100~rooms, while 26B falls from 0.97 at 10--20~rooms to 0.20--0.43 at 60--100~rooms.
+On ioBroker, 31B holds an F1 of 1.00 up to 60~rooms before completely failing at 80 and 100~rooms; 26B and 12B remain executable but drop from near-1.00 at 10--40~rooms down to around 0.5 at 80--100~rooms.
+Thus, although the structured KG representation aids smaller buildings, feeding the entire KG into the prompt overwhelms local models as buildings scale.
 
-Model capacity, in contrast, is a precondition for P.
-With the 12B variant, only 6 of 18 runs on FIWARE and 4 of 18 on ioBroker succeed, and all failures occur in the retrieval loop, which exhausts its iterations without a usable query result, in 22 of 26 cases at Q4.
-The 26B variant, which activates fewer parameters per token than the 12B variant, does not show this behaviour, so the number of active parameters alone does not explain the threshold.
-On FIWARE, P with the 26B variant outperforms every baseline of the 31B variant at every building size.
+Under raw metadata~(B1), all runs complete without abortions and F1 remains comparatively flat across building sizes.
+However, no model reaches an F1 of 1.00 at any building size, meaning that generated configurations consistently remain incomplete or non-executable.
 
-Gemini 3.6 Flash reaches an F1 of 1 with both P and B2 at 10, 40, and 100 rooms on both platforms, and all of its 54 runs succeed.
+In summary, answering RQ2, GraphRAG decouples deployment accuracy from building scale for sufficiently capable local models while avoiding both the scaling collapse of Full~KG~(B2) and the persistent accuracy ceiling of raw metadata~(B1).
+With GraphRAG, local-capable models are able to match the results of the frontier reference model, with the 31B variant reaching perfect score, while the 26B variant staying close behind.
+With respect to model size, however, a clear lower capacity bound can be identified: at 12B, graph retrieval becomes unreliable, establishing mid-size models (26B--31B) as the minimum reliable tier for resilient, local controller deployment.
 
-\subsection{Error analysis of the retrieval stage}
-All 28 failed runs of GraphRAG, 26 of the 12B and 2 of the 26B variant, end in the retrieval loop, and none in the deployment step, so SPARQL generation is the critical step of the pipeline.
-Four recurring error types were observed during development and evaluation.
-% TODO if space left. Show concrete examples.
-First, the LLMs hallucinate vocabulary from its prior knowledge of Brick, for example \texttt{brick:Building}, which has been superseded and is absent from the T-box view, where the graph uses \texttt{rec:Building}.
-Second, they alter the IRI of the found target room, for example by dropping a path segment of the ioBroker object identifier, so that the query matches no node.
-Third, they confuse classes and instances: a T-box edge stating that a command point has an instance of \texttt{http:Request} as value is turned into a pattern that requires the class \texttt{http:Request} itself as the value.
-Fourth, they write invalid SPARQL, such as a comparison of a variable with an IRI written as a triple pattern, which occurs more often with the smaller models.
-The first two types can be largely mitigated by prompt rules that require strict vocabulary and IRI grounding, and the third by a rule with an example showing how to read the T-box view.
-However, syntax errors remain unresolved and persist for smaller models.
-Approaches, such as forwarding error message from SPARQL endpoint and requiring syntax validation, are tested, but no significant improvement can be observed.
+\subsection{Error analysis of the GraphRAG pipeline}
+Across all GraphRAG~(P) evaluations, all 28~failed runs (26 with Gemma~4~12B, 2 with Gemma~4~26B) terminate inside the retrieval loop, whereas no failures occur in the subsequent deployment generation stage.
+SPARQL query generation is therefore the critical bottleneck of the pipeline and directly explains the lower capacity bound observed at 12B in Experiment~E2.
 
-% TODO check how to phrase this below? or remove?
-% A further observation is that the outcome of a run can change noticeably when only the identifier of the target room changes in an otherwise identical prompt, which repeated runs confirmed for all models; since each building size of E2 uses a different target room, part of the variation between neighbouring sizes in Figure~\ref{fig:scaling} reflects this sensitivity rather than the size of the building.
+Four recurring error types were observed during development and evaluation:
+\begin{enumerate}[noitemsep,topsep=3pt]
+    \item \emph{Vocabulary hallucination}: Models draw on prior knowledge of the Brick ontology and emit superseded terms absent from the T-box view, such as \texttt{brick:Building} where the graph uses \texttt{rec:Building}.
+    \item \emph{IRI alteration}: Models modify the IRI of a previously retrieved target room, for example, by dropping a path segment from an ioBroker object identifier, so that the resulting query matches no node.
+    \item \emph{Class--instance confusion}: Models misinterpret T-box schema edges, turning a relation that expects an instance of \texttt{http:Request}  into a pattern that requires the class \texttt{http:Request} itself.
+    \item \emph{Invalid SPARQL syntax}: Models produce syntactically invalid queries, such as writing a comparison between a variable and an IRI instead of a triple pattern; this error occurs predominantly with smaller models.
+\end{enumerate}
 
-\section{Discussion} % TODO Whether keep this section? Or turn it to subsection like Summary
-\label{sec:discussion}
-% TODO show it be a summary of the answer to all research questions?
-The reference model qualifies what the pipeline contributes.
-Gemini 3.6 Flash reproduces every information point with the full KG up to 100 rooms, so a sufficiently capable model with a large context window does not need retrieval to use the graph at these building sizes.
-What it does need is the graph: with raw metadata it omits the FIWARE tenancy headers like the local variants, which locates the benefit of the representation in the explicit binding of each request to its headers rather than in model size.
-For the locally served variants, which cannot use the full graph reliably beyond a few dozen rooms, P is what closes the gap: the 31B variant with P matches the reference model at all evaluated sizes, and the 26B variant comes within 0.07 of it.
-Retrieval therefore makes the accuracy of a hosted model available to models that can run on premises, at an input of about 8k to 17k tokens per case that does not grow with the building.
+The first three failure modes can be largely mitigated through targeted prompt constraints, as shown in Figure~\ref{fig:graphrag_retrieval_validation_vertical}.
+Strict vocabulary and IRI grounding rules curb hallucinations and IRI alterations, while a rule paired with an example of how to interpret the T-box view resolves most class--instance confusion.
+By contrast, SPARQL syntax errors persist for smaller models.
+Forwarding error messages from the SPARQL endpoint and enforcing syntax validation were both tested, but neither yielded a significant improvement.
+Across the 28~failed runs, only one is caused by class--instance confusion; the remaining 27 fail due to syntax errors.
+Specifically, misusing \texttt{;} as a separator, adding extra quotes around IRIs, or writing invalid patterns such as \texttt{?room = <IRI>} can be observed.
+Consequently, while prompt grounding suffices to stabilise retrieval for mid-size models (26B--31B), overcoming syntactic unreliability for small modells (12B) remains an open limitation that feedback loops alone do not resolve.
 
 
 \section{Limitations and Conclusion}
@@ -542,19 +546,8 @@ This supports our two contributions: the retrieval and generation pipeline for a
 Three questions remain open: whether the parity with a hosted model extends to other model families, whether graph generation generalises to platforms whose metadata exposes no usable typing, and whether the accuracy persists when the task is raised from a single space to floor or building level, where the retrieved subgraph must span more spaces.
 The practical implication is that deployment context derived automatically from the platform can lower the model size needed for cross-platform building services, which makes local deployment feasible where building data should stay on site.
 
-
-\section*{Data Availability Statement}
-The metadata extraction tooling, the KG generation scripts, the GraphRAG pipeline, and the evaluation harness will be released in a public repository upon publication. Because the cases are derived from building installations, raw platform metadata will be released in a de-identified and, where required, synthetically equivalent form; source code and the evaluation protocol will be openly available without restriction. Ground-truth configurations will be released alongside the de-identified cases.
-
-\section*{Author Contributions (CRediT)}
-[Author A]: Conceptualization, Methodology, Software, Writing -- original draft. [Author B]: Investigation, Data curation, Validation, Writing -- review and editing. [Author C]: Supervision, Project administration, Funding acquisition, Writing -- review and editing. [Placeholder author names and roles to be confirmed before submission.]
-
-\section*{Conflict of Interest}
-The authors declare no conflict of interest.
-
-\section*{Funding}
-This work was supported by [Funder Name] under grant [Grant Number]. [Placeholder: funding details to be confirmed before submission.]
-
+\section*{Acknowledgments}
+This work was supported by xxx under grant xxx.
 
 \section*{Use of generative AI tools declaration}
 During the preparation of this paper, the authors used Claude Science to assist with research planning, drafting, and language editing.
