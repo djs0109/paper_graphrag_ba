@@ -42,11 +42,10 @@
 \usepackage{tabularx}
 \usepackage{boxedminipage}
 \usepackage{booktabs}% rules used by the manuscript tables
-
-
 \usepackage{lastpage} % for the number of the last page in the document
 \usepackage{fancyhdr}
 \usepackage{soul} % for defining underline thickness
+\usepackage{hyperref}
 
 % -------------------------------------------------------------------
 % Different font in captions
@@ -187,7 +186,8 @@
 }
 
 \date{}
-\title{\vspace{-9mm} \titlefont Enabling Automated Controller Deployment in IoT-Enabled Building Systems with GraphRAG \vspace{-5.5mm}}
+% TODO add cross-platform?
+\title{\vspace{-9mm} \titlefont Automated Controller Deployment Across Heterogeneous Building IoT Platforms with GraphRAG \vspace{-5.5mm}}
 \author{
 %\authorfont{Junsong Du$^1$, Rita Streblow$^1$, and Dirk Müller$^2$}\\
 %\authorfont{$^1$RWTH Aachen University, Aachen, Germany}\\
@@ -255,58 +255,56 @@ Retrieval reliability is reinforced through self-reflective validation and promp
 Second, we evaluate this pipeline on simulated building systems connected to the FIWARE and ioBroker platforms.
 By comparing against two full-context baselines and employing LLMs of different sizes, we demonstrate the robustness and find limitations of the proposed GraphRAG pipeline.
 
-In the rest of this paper, the Related Work section reviews existing literature to contextualize our work, the Problem Formulation section specifies the deployment task within the cross-platform environment, the Method section details the proposed GraphRAG pipeline, the Evaluation section presents the evaluation design and results, the Discussion section discusses the findings, and the final section concludes the paper with limitations and future work.
+In the rest of this paper, the Related Work section positions this work and states the research questions, the System Setup and Problem Formulation section specifies the test system and the deployment task, the Method section details the GraphRAG pipeline, the Evaluation section presents the experiments and results, and the Limitations and Conclusion section closes the paper.
 
 \section{Related Work}
 \label{sec:related-work}
-% TODO the main information is not yet defined for related work
 \subsection{Building automation and IoT deployment}
-Deployment and commissioning are recognised as the labour-intensive part of building system delivery. \citet{crowe2020building} quantify commissioning as a substantial, recurring cost centre and note that controls have grown more sophisticated without the process becoming less manual. \citet{pritoni2021metadata} survey forty metadata schemas and conclude that creating, sustaining, and using semantic models is difficult, labour-intensive, and costly, with semantic gaps blocking cross-building scalability. \citet{fierro2020shepherding} trace the root cause to lifecycle fragmentation: representations produced at design, construction, and operation stages are mutually incompatible, so a usable model must be rebuilt repeatedly. On the platform side, FIWARE provides standard-based, open-source components and an NGSI-LD context model for cross-domain IoT interoperability \citep{bauer2022fiware}. Platforms of the open-source home-automation class, which \citet{setz2021comparison} compare across twenty systems and four in depth, follow a different design philosophy: lightweight, per-instance object trees defined by the operator rather than a shared standard. This strand establishes the pain but treats deployment as an organisational concern. Deployment automation therefore remains a human workflow supported by documentation, spreadsheets, and vendor tooling, and the reviewed literature documents the cost of that workflow more thoroughly than it proposes to reduce it. What it leaves open is a technical method that derives a deployable configuration from the live state of a platform rather than from documentation or human interpretation.
+Deployment and commissioning are the labour-intensive part of building system delivery: \citet{crowe2020building} quantify commissioning as a substantial, recurring cost, and \citet{pritoni2021metadata} conclude from a survey of forty metadata schemas that creating, maintaining, and using semantic models is difficult and costly.
+\citet{fierro2020shepherding} attribute this to lifecycle fragmentation, which forces a usable model to be rebuilt at each stage.
+IoT platforms add a further layer of heterogeneity.
+FIWARE provides standard-based components and the NGSI-LD context model \citep{bauer2022fiware}, whereas open-source home-automation platforms, compared by \citet{setz2021comparison}, expose operator-defined object trees without a shared standard.
+This strand documents the cost of manual deployment, but it offers no technical method that derives a deployable configuration from the live state of a platform.
 
-\subsection{Knowledge graphs and ontologies for IoT and buildings}
-The semantic-web community supplies the vocabulary layer. Brick \citep{balaji2018brick} defines an ontology and metadata schema for the physical, logical, and virtual assets of a building and their relations, enabling portable applications decoupled from vendor point names. RealEstateCore \citep{hammar2019realestatecore} offers a modular core-plus-extensions ontology for real-estate data that integrates BIM and IoT semantics. The SSN ontology \citep{compton2012ssn} provides the foundational stimulus-sensor-observation model for describing sensors and actuation. These resources are mature and well-governed, and this paper adopts their conceptual distinctions (space, device, point, measurement) as design guidance. The limitation is operational: the community has repeatedly documented that instantiating such a model against a specific building is manual and costly \citep{pritoni2021metadata}, and even automated assistance has targeted sub-problems such as point classification \citep{qian2026brickdicl} rather than full deployment. A second limitation is that ontology classes describe what a point is, not the concrete interface syntax by which a particular platform reads it. The consequence is a persistent gap between a standard that specifies meaning and a platform that specifies syntax, and no reviewed work closes both from live data. What this strand leaves open is the automatic derivation of a usable graph from live, non-standardised platform metadata, and the use of that graph to emit platform-specific configuration.
+\subsection{Semantic models and portable building applications}
+In recent years, ontologies like Brick~\citep{balaji2018brick} and RealEstateCore~\citep{hammar2019realestatecore} provide the vocabulary to describe spaces, devices, and points independently of vendors.
+For specific applications like controller, the Control Description Language of OpenBuildingControl \citep{wetter2022openbuildingcontrol} makes control strategies portable as specifications.
+These approaches assume that a curated semantic model exists, that an expert writes the query for each application, and that points are bound through external references such as BACnet or time-series identifiers~\citep{pereiraSemanticsdrivenFrameworkEnable2025}.
+The potentials to unlock fully automated deployment over an IoT platform remains unexplored; neither the ontologies nor existing tools consider the interface syntax by which a datapoint can be read or written.
 
 \subsection{GraphRAG and knowledge-graph-grounded LLMs}
-Retrieval-augmented generation (RAG) conditions an LLM on evidence retrieved from an external store \citep{lewis2020retrieval}, which reduces hallucination when the required knowledge sits in self-contained passages.
-Engineering metadata rarely has a text form.
-Whether a controller can be deployed in a room depends on actuation devices, sensor data points, and how the platform interfaces are available.
-The alternative of supplying all metadata in the prompt is unreliable as well, since LLM accuracy drops when relevant information is buried in long inputs \citep{liu2024lost}.
-GraphRAG addresses these issues by retrieving over a graph instead of text chunks.
-\citet{edge2024local} build an entity graph from a corpus and answer global questions through community summaries, and \citet{peng2025graphragsurvey} organise the field into graph-based indexing, graph-guided retrieval, and graph-enhanced generation, the stages along which the pipeline of this paper is described.
+Retrieval-augmented generation (RAG) conditions an LLM on evidence retrieved from an external store \citep{lewis2020retrieval}, which works well when the required knowledge sits in self-contained text passages.
+Engineering metadata rarely has this form, and supplying all metadata in the prompt is unreliable as well, since LLM accuracy drops when relevant information is buried in long inputs \citep{liu2024lost}.
+GraphRAG retrieves over a graph instead of text chunks \citep{edge2024local}; \citet{peng2025graphragsurvey} organise the field into graph-based indexing, graph-guided retrieval, and graph-enhanced generation, the stages along which the pipeline of this paper is described.
 
 In the building and IoT domain, GraphRAG has so far served mainly as an information-access layer.
 LLMs translate natural-language requests into graph queries \citep{iranmaneshLLMassistedGraphRAGInformation2025}, retrieve $k$-hop subgraphs as context for SQL generation in operation and maintenance \citep{liLargeLanguageModelbased2025}, map user intents to action planning in smart homes \citep{jeongOnDeviceIntentReasoning2025}, and answer multi-constraint questions over a graph built from the documentation of an IoT platform \citep{yu2025graphragiot}.
-These works show that GraphRAG can bridge the semantic gap between user intent and specific system implementation, but their outputs are answers, queries, or plans, which a human or another system still has to turn into a working configuration.
-Their retrieval mechanism also scales poorly with heterogeneous platform data.
-With $k$-hop expansion, a small $k$ misses platform-specific interface nodes that lie several relations away from the anchor entity, whereas a large $k$ pulls in neighbourhoods that are irrelevant to the task and inflates the context.
+Their outputs are answers, queries, or plans, which a human or another system still has to turn into a working configuration.
+With $k$-hop expansion, moreover, a small $k$ misses platform-specific interface nodes that lie several relations away from the anchor entity, whereas a large $k$ pulls in irrelevant neighbourhoods and inflates the context.
+Works that move towards automation enforce structured LLM outputs for actions in building systems without a graph \citep{lyuLLMpoweredAgentOccupantcentric2026}, ground an agentic LLM in a simplified building semantic layer for thermal simulation \citep{peng2026grounding}, or combine keyword, vector, and subgraph retrieval to configure network optimisation problems \citep{wenHybridRAGBasedLLMAgents2026}; they rely on customised graphs or other information sources.
 
-A smaller set of works moves from information access towards automation.
-\citet{lyuLLMpoweredAgentOccupantcentric2026} show, without a graph, that enforcing structured LLM outputs is a good practice to enable automated action in building systems.
-\citet{peng2026grounding} ground an agentic LLM in a lightweight building semantic layer and automate thermal simulation; the semantic layer, however, relies on specific simplification.
-\citet{wenHybridRAGBasedLLMAgents2026} combine keyword, vector, and subgraph retrieval to generate configurations of network optimisation problems.
-% TODO these works show automation potential, but they either rely on customised graphs or other information sources.
-These works show that automated action is generally feasible via LLMs, but they either rely on customised graphs or other information sources.
-A generalized workflow based on comprehensive KGs is still missing.
+In summary, no reviewed work generates the semantic model from a live, non-standardised platform, lets the LLM formulate the task-specific queries, and retrieves the platform binding required to actuate, so that the output is an executable controller configuration.
+This paper addresses this gap.
 
 \subsection{Research questions}
 The evaluation addresses two questions.
-RQ1: Does GraphRAG enable automated deployment for cross-platform application deployment? % (10 buildings, gemma4:31b)
-RQ2: does GraphRAG-based building automation show resilience against increasing data volumes and different model size? % (room number from 10 to 100, model size 12b, 26b, 31b)
+RQ1: Does retrieval over a generated KG improve the accuracy of building controller deployments across IoT platforms compared with full-context prompting? % E1 (10 rooms, Gemma 4 31B, Gemini 3.6 Flash)
+RQ2: How does this effect change with building size and model capacity? % E2 (10 to 100 rooms, Gemma 4 12B/26B/31B, Gemini 3.6 Flash)
 
 \section{System Setup and Problem Formulation}
 \label{sec:problem-formulation}
-The test system simulates a multi-rooms hotel building (scaled from 10 to 100~rooms) using AixLib~\cite{2023aixlib} and connects it to the IoT platforms via MQTT.
+The test system simulates a multi-room hotel building (scaled from 10 to 100~rooms) using AixLib~\cite{2023aixlib} and connects it to the IoT platforms via MQTT.
 All rooms include heating, cooling, and ventilation actuators but vary in their available sensors (temperature, presence, and $\mathrm{CO_2}$).
 At the platform layer, the building is instantiated on two structurally distinct IoT platforms, FIWARE and ioBroker.
 The ten-room building is derived from pilot installations.
 For scalability evaluation, larger instances with 20, 40, 60, 80, and 100 rooms, are generated by the same instantiation procedure.
 
-The task is the deployment of a demand-based HVAC controller~\cite{duSemiautomatedKnowledgeGraph2026a} consists of function-oriented heating, cooling, and ventilation modules that can be combined according to available actuators and adaptively select their highest-priority control strategy depending on the discovered sensors.
+The task is the deployment of a demand-based HVAC controller~\cite{duSemiautomatedKnowledgeGraph2026a}, which consists of function-oriented heating, cooling, and ventilation modules that can be combined according to available actuators and adaptively select their highest-priority control strategy depending on the discovered sensors.
 For each building size the deployment task is evaluated room-wise, on a randomly picked target room.
-During this process, device availability and platform specific communication mechanism must be considered, conventionally by human experts.
-The growing number of rooms in the building increases therefore the volume of metadata that has to be searched.
-For human, such deployment task is labor-intensive and error-prone.
-Thus, for scalable adoption in the practice, it is necessary to automate this process in a generic manner.
+During this process, device availability and platform-specific communication mechanisms must be considered, conventionally by human experts.
+The growing number of rooms therefore increases the volume of metadata that has to be searched.
+For humans, this task is labour-intensive and error-prone.
+Thus, for scalable adoption in practice, it is necessary to automate this process in a generic manner.
 
 Ground truth for a case is an expert-authored pair of a control strategy and a platform configuration.
 It is authored from the physical description of the target room and the platform API documentation, independently of the T-box of Figure~\ref{fig:t-box-building-http}, because grading generated output against a schema produced by the same pipeline would be circular.
@@ -315,7 +313,7 @@ It is authored from the physical description of the target room and the platform
 \label{sec:method}
 We present a GraphRAG pipeline that automates controller deployment in IoT-enabled building systems.
 This pipeline follows the three-stage structure of \citet{peng2025graphragsurvey} with use case specific adaptations and enhancements.
-Indexing is the graph being built from IoT platform; retrieval is enhanced with a self-reflective validation; generation conditions LLMs on the retrieved subgraph to produce an executable configuration for the controllers.
+Indexing builds the graph from the IoT platform; retrieval is enhanced with a self-reflective validation; generation conditions LLMs on the retrieved subgraph to produce an executable configuration for the controllers.
 Each stage is described in the following subsections.
 
 \subsection{Knowledge graph generation from IoT platform}
@@ -323,22 +321,26 @@ Each stage is described in the following subsections.
 A knowledge graph construction pipeline (KGCP) has been proposed by Du et al. \citep{duSemiautomatedKnowledgeGraph2026a} to generate KGs from heterogeneous IoT platforms, where RDF Mapping Language (RML) documents are semi-automatically defined for specific platforms and used to transform the raw platform metadata into KGs.
 This paper reuses the KGCP for the two target platforms, FIWARE and ioBroker.
 
-Besides the existing functions, we further extend the KGCP with a post-processing module to add information about the platform-specific API syntax to the generated KGs by traversing all endpoints nodes and matching them with the corresponding API syntax in the platform specification (swagger or OpenAPI document).
+Besides the existing functions, we further extend the KGCP with a post-processing module to add information about the platform-specific API syntax to the generated KGs by traversing all endpoint nodes and matching them with the corresponding API syntax in the platform specification (swagger or OpenAPI document).
 
-KGs of both platforms are mapped onto the common T-box shown in Figure~\ref{fig:t-box-building-http}, which fixes the vocabulary that the retrieval stage.
+Metadata of both platforms are mapped onto the common T-box shown in Figure~\ref{fig:t-box-building-http}, which fixes the vocabulary available to the retrieval stage.
 % TODO make it show in the previous page?
 \begin{figure*}[ht]
     \centering
     \includegraphics[width=0.9\textwidth]{img/method/T-box-building-http}
+    \vspace{3pt}
     \caption{Common T-box of the generated KGs, covering devices and spaces, data points and commands, and platform-specific API information. Dashed boxes denote literal values}
     \label{fig:t-box-building-http}
 \end{figure*}
 It is organised in three blocks, covering devices and spaces, data points and commands, and platform-specific API information.
-For the first two blocks, the classes and relations are drawn from Brick \citep{balaji2018brick} and RealEstateCore \citep{hammar2019realestatecore}, which are widely used in building automation domain.
-For the third block, the W3C HTTP vocabulary is used to describe the platform-specific API syntax, while the vocabulary is extended with further schema information to describe the structure of the request or response body.
+For the first two blocks, the classes and relations are drawn from Brick \citep{balaji2018brick} and RealEstateCore \citep{hammar2019realestatecore}, which provide point classes at the granularity of building automation and space and device relations, respectively.
+% TODO eventually explain why other ontologies are not used.
+%ASHRAE 223P\footnote{\url{https://open223.info/}} was not used because its focus is the connection topology of equipment, which a room-level deployment does not require, and SAREF \citep{daniele2015saref} was not used because its appliance-oriented classes lack the building point semantics of Brick.
+For the third block, the W3C HTTP vocabulary\footnote{\url{https://www.w3.org/TR/HTTP-in-RDF10/}} is used to describe the platform-specific API syntax, while the vocabulary is extended with further schema information to describe the structure of the request or response body.
+As a result, KGs representing the underlying building systems and platform specific interfaces are generated, with sizes ranging from 1,425 to 21,849 triples.
 
-This three-block structure keeps the platform-independent part of a deployment decision separate from the platform-specific one.
-The first two blocks state which space contains which device and which quantity each point carries, and they are identical for FIWARE and ioBroker; the third block states how a point is actually read or written, and it is where the two platforms differ.
+%This three-block structure keeps the platform-independent part of a deployment decision separate from the platform-specific one.
+%The first two blocks state which space contains which device and which quantity each point carries, and they are identical for FIWARE and ioBroker; the third block states how a point is actually read or written, and it is where the two platforms differ.
 
 \subsection{Validation enhanced information retrieval}
 Retrieval is performed by generating a SPARQL query rather than by expanding a fixed neighbourhood around an anchor node, as shown in Figure~\ref{fig:graphrag_retrieval_validation_vertical}.
@@ -362,7 +364,7 @@ As engineering input, a deployment request is decomposed into four requirement-o
 \end{itemize}
 The generated query is executed against the KG and accepted only if it is executable, returns a non-empty result, and stays within a size limit; otherwise the failure reason is written back into the next prompt as feedback.
 
-These simple validations ensure that the retrieval agent produces a syntactically valid query that returns a plausibel result, not that the result is sufficient to answer the question.
+These simple validations ensure that the retrieval agent produces a syntactically valid query that returns a plausible result, not that the result is sufficient to answer the question.
 The retrieved tabular results are therefore passed together with the original question to a validation agent, which judges sufficiency against the downstream use of the information and returns validation notes.
 If the information is sufficient, it is handed to the generation stage; if it is not, the notes re-enter the generation prompt as constructive feedback and a further iteration is started, up to three iterations, after which the deployment is reported as failed.
 Judging the result against its downstream use is what distinguishes this loop from a single retrieval pass, since a syntactically valid query can still omit, for instance, an important header that is required in an API endpoint.
@@ -380,11 +382,12 @@ The main errors are missing or wrong API information, leading to unsuccessful de
 The evaluation is organised into two experiments that share one deployment task, one set of test buildings, and the open-weight models of the Gemma~4 family.
 Experiment~E1 fixes the building size at ten rooms and the local model at the largest variant (31B), comparing the three context strategies to answer RQ1.
 Experiment~E2 scales the building from ten to one hundred rooms and varies the local model from 31B down to 12B across all three context strategies to answer RQ2.
-Both experiments additionally include Gemini~3.6~Flash (medium thinking level, evaluated on 25~November~2026) as a frontier reference model from the same lineage, testing whether local models match the accuracy of a larger model.
+Both experiments additionally include Gemini~3.6~Flash (medium thinking level, evaluated on 24 and 25~November~2026) as a frontier reference model from the same lineage, testing whether local models match the accuracy of a larger model.
 To control API cost, the reference model is evaluated at 10, 40, and 100~rooms only, covering the smallest, an intermediate, and the largest building.
 To account for generation variance, every experimental configuration is repeated three times, and we report the mean across runs.
 
-Three conditions are defined in Table~\ref{tab:conditions}, differing only in the context supplied to the generation stage.
+Three conditions are defined in Table~\ref{tab:conditions}.
+The proposed pipline and the two baselines differ only in the context supplied to the generation stage.
 B1 supplies the raw platform metadata of the whole building, B2 supplies the generated KG of the whole building, and P supplies the subgraph retrieved by the validation-enhanced retrieval stage.
 All three conditions use the same deployment prompt, structured output schema, and decoding configuration so that differences in deployment accuracy are attributable solely to the supplied context.
 
@@ -393,13 +396,13 @@ All three conditions use the same deployment prompt, structured output schema, a
     \label{tab:conditions}
     \centering\footnotesize
     \setlength{\tabcolsep}{4pt}
-    \begin{tabular}{@{}p{0.6cm}p{2.6cm}p{3.6cm}@{}}
+    \begin{tabular}{@{}p{0.6cm}p{2cm}p{4.2cm}@{}}
         \toprule
-        ID & Condition                     & Context supplied                                              \\
+        ID & Condition                     & Context                                              \\
         \midrule
         B1 & Full-context, raw metadata    & Platform metadata of the whole building and API specification \\
         B2 & Full-context, KG & Generated KG of the whole building                            \\
-        P  & GraphRAG (proposed)           & Dedicated information retrieved from KG                       \\
+        P  & GraphRAG          & Dedicated information retrieved from KG                       \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -453,7 +456,7 @@ Even summed across all four queries, only a small fraction of the full KG suppli
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=\linewidth]{img/evaluation/visited_triples_10rooms}
+    \includegraphics[width=0.9\linewidth]{img/evaluation/visited_triples_10rooms}
     \caption{Percentage of KG triples visited per retrieval query (Q1--Q4) on the ten-room building for Gemma~4~31B and Gemini~3.6~Flash on FIWARE and ioBroker.}
     \label{fig:visited_triples_10rooms}
 \end{figure}
@@ -464,11 +467,11 @@ Whereas the local-capable Gemma~4~31B model trails Gemini~3.6~Flash under both f
 
 \subsection{Scaling with building size and model capacity}
 E2 repeats the deployment task of a target room for buildings of 10, 20, 40, 60, 80, and 100 rooms.
-Three variants of the Gemma 4 family are used : the dense 31B variant, the mixture-of-experts 26B variant, and the dense 12B variant.
+Three variants of the Gemma 4 family are used: the dense 31B variant, the mixture-of-experts 26B variant, and the dense 12B variant.
 The 12B and 26B variants are served locally and the 31B variant through a hosted endpoint, all with the same decoding settings\footnote{For all Gemma 4 models, the context is configured to 256 k tokens, and the default generation parameters are applied (temperature = 1.0, top\_p = 0.95, top\_k = 64).}.
-As the reference frontier model, the Gemini 3.6 Flash is used, but the task is restricted to the 10-, 40-, and 100-room buildings to save costs.
-Since the data-point task has been proven to be trivial, only the information-point is further evaluated.
-Figure~\ref{fig:scaling} reports the information-point F1 score across all 378 runs, comprising 108 settings for the Gemma~4 variants and 18 for Gemini~3.6~Flash, each repeated three times
+As the reference frontier model, Gemini 3.6 Flash is used, but the task is restricted to the 10-, 40-, and 100-room buildings to save costs.
+Since all conditions reach a data-point precision and recall of 1.00 in E1, only the information-point level is evaluated in E2.
+Figure~\ref{fig:scaling} reports the information-point F1 score across all 378 runs, comprising 108 settings for the Gemma~4 variants and 18 for Gemini~3.6~Flash, each repeated three times.
 
 \begin{figure*}[t]
 \centering
@@ -497,7 +500,7 @@ Under raw metadata~(B1), all runs complete without abortions and F1 remains comp
 However, no model reaches an F1 of 1.00 at any building size, meaning that generated configurations consistently remain incomplete or non-executable.
 
 In summary, answering RQ2, GraphRAG decouples deployment accuracy from building scale for sufficiently capable local models while avoiding both the scaling collapse of Full~KG~(B2) and the persistent accuracy ceiling of raw metadata~(B1).
-With GraphRAG, local-capable models are able to match the results of the frontier reference model, with the 31B variant reaching perfect score, while the 26B variant staying close behind.
+With GraphRAG, local-capable models are able to match the results of the frontier reference model, with the 31B variant reaching a perfect score, while the 26B variant stays close behind.
 With respect to model size, however, a clear lower capacity bound can be identified: at 12B, graph retrieval becomes unreliable, establishing mid-size models (26B--31B) as the minimum reliable tier for resilient, local controller deployment.
 
 \subsection{Error analysis of the GraphRAG pipeline}
@@ -518,7 +521,7 @@ By contrast, SPARQL syntax errors persist for smaller models.
 Forwarding error messages from the SPARQL endpoint and enforcing syntax validation were both tested, but neither yielded a significant improvement.
 Across the 28~failed runs, only one is caused by class--instance confusion; the remaining 27 fail due to syntax errors.
 Specifically, misusing \texttt{;} as a separator, adding extra quotes around IRIs, or writing invalid patterns such as \texttt{?room = <IRI>} can be observed.
-Consequently, while prompt grounding suffices to stabilise retrieval for mid-size models (26B--31B), overcoming syntactic unreliability for small modells (12B) remains an open limitation that feedback loops alone do not resolve.
+Consequently, while prompt grounding suffices to stabilise retrieval for mid-size models (26B--31B), overcoming syntactic unreliability for small models (12B) remains an open limitation that feedback loops alone do not resolve.
 
 
 \section{Limitations and Conclusion}
@@ -526,18 +529,15 @@ Consequently, while prompt grounding suffices to stabilise retrieval for mid-siz
 % TODO phrase enabling smallest models to correctly perform graph query will be interesting. Balance needs to be found to sacrifice query flexibility and the query validity.
 % TODO real-time ability
 The findings are subject to the following limitations.
-First, the scope is narrow: two platforms, one task family (demand-based HVAC controller deployment), and one open-weight model family with a single hosted reference model. The results do not establish the automation of building systems in general.
+First, the scope is narrow: two platforms, one task family (demand-based HVAC controller deployment), and one open-weight model family with a single hosted reference model, whose behaviour can change without notice, so the parity reported here holds for this model version and the evaluated sizes only. The results do not establish the automation of building systems in general.
 Second, the evaluation is offline. Generated configurations are compared with expert-authored ground truth, but they were not executed against the platforms in a closed control loop, so the accuracy reported here is a necessary rather than a sufficient condition for a working controller. The pipeline is also not yet evaluated for real-time use.
-Third, the buildings of 20 to 100 rooms are generated from two pilot installations. This controls building size and sensor availability, but the scaling results hold only for buildings with that device-to-point topology. Each size uses a single target room, and the error analysis shows that the outcome can change with the room identifier alone, so differences between neighbouring sizes should not be over-interpreted.
+Third, the buildings of 20 to 100 rooms are generated from two pilot installations. This controls building size and sensor availability, but the scaling results hold only for buildings with that device-to-point topology. Each size uses a single target room, so differences between neighbouring sizes should not be over-interpreted.
 Fourth, the quality of the graph is bounded by the metadata that a platform exposes, and the generation of the graph is reused and not re-evaluated here. Ground truth depends on expert judgement. It is authored independently of the T-box, so that the pipeline is not rewarded for reproducing its own encoding, but expert variation remains a source of uncertainty.
-Fifth, all failures of the pipeline occur in the SPARQL retrieval loop, and syntax errors of small models persist despite the parser feedback. The pipeline is therefore usable with models of at least the 26B class but not with the 12B model.
-Finally, the comparison with a larger model rests on one hosted model, Gemini 3.6 Flash, evaluated at three of the six building sizes on 24 and 25 November 2026.
-Hosted models can change without notice, so the parity reported here holds for this model version and these sizes only.
+Finally, all failures of the pipeline occur in the SPARQL retrieval loop, and syntax errors of small models persist despite the parser feedback. The pipeline is therefore usable with models of at least the 26B class but not with the 12B model.
 
 This paper presented a GraphRAG pipeline that automates demand-based HVAC controller deployment from KGs generated from live IoT platform metadata.
 Across FIWARE and ioBroker, it reproduced every information point of the ten-room building with the 31B model, whereas both full-context baselines lost information points on FIWARE.
 With the pipeline, the 31B model matched the hosted reference model Gemini 3.6 Flash at 10, 40, and 100 rooms, which reached this accuracy with the full KG as well, but not with raw metadata.
-The structure supplied by the graph also compensates for model size to a degree: on FIWARE, the 26B model with the pipeline outperformed every baseline of the larger 31B model at every building size.
 This supports our two contributions: the retrieval and generation pipeline for automated controller deployment, and the cross-platform evaluation across varying building scales and model sizes.
 Three questions remain open: whether the parity with a hosted model extends to other model families, whether graph generation generalises to platforms whose metadata exposes no usable typing, and whether the accuracy persists when the task is raised from a single space to floor or building level, where the retrieved subgraph must span more spaces.
 The practical implication is that deployment context derived automatically from the platform can lower the model size needed for cross-platform building services, which makes local deployment feasible where building data should stay on site.
