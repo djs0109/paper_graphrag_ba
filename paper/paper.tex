@@ -186,7 +186,6 @@
 }
 
 \date{}
-% TODO add cross-platform?
 \title{\vspace{-9mm} \titlefont Automated Controller Deployment Across Heterogeneous Building IoT Platforms with GraphRAG \vspace{-5.5mm}}
 \author{
 %\authorfont{Junsong Du$^1$, Rita Streblow$^1$, and Dirk Müller$^2$}\\
@@ -306,8 +305,10 @@ The growing number of rooms therefore increases the volume of metadata that has 
 For humans, this task is labour-intensive and error-prone.
 Thus, for scalable adoption in practice, it is necessary to automate this process in a generic manner.
 
-Ground truth for a case is an expert-authored pair of a control strategy and a platform configuration.
-It is authored from the physical description of the target room and the platform API documentation, independently of the T-box of Figure~\ref{fig:t-box-building-http}, because grading generated output against a schema produced by the same pipeline would be circular.
+The ground truth for each evaluation case is an expert-authored configuration file specifying the selected control strategy, all required data points, and the platform-specific interface syntax.
+Each ground-truth configuration has been used to instantiate the controller and validated against the simulated building IoT system.
+Missing or incorrect data points can result in suboptimal control strategies, whereas erroneous API specifications cause communication failures that prevent the controller from operating.
+Consequently, a generated configuration must match the ground truth to ensure both energy-efficient control and reliable platform interaction.
 
 \section{Method}
 \label{sec:method}
@@ -317,6 +318,7 @@ Indexing builds the graph from the IoT platform; retrieval is enhanced with a se
 Each stage is described in the following subsections.
 
 \subsection{Knowledge graph generation from IoT platform}
+% TODO change back later
 %A knowledge graph construction pipeline (KGCP) has been proposed in our previous work \citep{duSemiautomatedKnowledgeGraph2026a}, which generates KGs from heterogeneous IoT platforms.
 A knowledge graph construction pipeline (KGCP) has been proposed by Du et al. \citep{duSemiautomatedKnowledgeGraph2026a} to generate KGs from heterogeneous IoT platforms, where RDF Mapping Language (RML) documents are semi-automatically defined for specific platforms and used to transform the raw platform metadata into KGs.
 This paper reuses the KGCP for the two target platforms, FIWARE and ioBroker.
@@ -450,7 +452,7 @@ Supplying the full KG in B2 resolves these errors for Gemini~3.6~Flash on both p
 In contrast, the proposed GraphRAG pipeline is the only condition that achieves a precision and recall of 1.00 on both platforms and with both models.
 
 This gain stems from focusing the generation stage on a compact, deployment-relevant subgraph rather than the entire building representation.
-Figure~\ref{fig:visited_triples_10rooms} shows the share of KG triples visited during each of the four retrieval queries (Q1--Q4) in condition~P.
+Figure~\ref{fig:visited_triples_10rooms} shows the share of KG triples visited during each of the four retrieval queries (Q1--Q4) in P.
 Every individual query inspects under 10\% of the KG, with Q1--Q3 each visiting at most 3.1\% and Q4 accounting for the largest share (4.8\%--9.9\%, higher on FIWARE than on ioBroker).
 Even summed across all four queries, only a small fraction of the full KG supplied in B2 is traversed (roughly 10\%--12\% in total, or less where queries overlap), which prevents critical protocol details such as tenancy headers from being lost in extraneous building context.
 
@@ -468,7 +470,7 @@ Whereas the local-capable Gemma~4~31B model trails Gemini~3.6~Flash under both f
 \subsection{Scaling with building size and model capacity}
 E2 repeats the deployment task of a target room for buildings of 10, 20, 40, 60, 80, and 100 rooms.
 Three variants of the Gemma 4 family are used: the dense 31B variant, the mixture-of-experts 26B variant, and the dense 12B variant.
-The 12B and 26B variants are served locally and the 31B variant through a hosted endpoint, all with the same decoding settings\footnote{For all Gemma 4 models, the context is configured to 256 k tokens, and the default generation parameters are applied (temperature = 1.0, top\_p = 0.95, top\_k = 64).}.
+The 12B and 26B variants are served locally and the 31B variant through a hosted endpoint, all with the same decoding settings\footnote{For all Gemma 4 models, the context is configured to 256 k tokens, thinking is activated and the default generation parameters are applied (temperature = 1.0, top\_p = 0.95, top\_k = 64).}.
 As the reference frontier model, Gemini 3.6 Flash is used, but the task is restricted to the 10-, 40-, and 100-room buildings to save costs.
 Since all conditions reach a data-point precision and recall of 1.00 in E1, only the information-point level is evaluated in E2.
 Figure~\ref{fig:scaling} reports the information-point F1 score across all 378 runs, comprising 108 settings for the Gemma~4 variants and 18 for Gemini~3.6~Flash, each repeated three times.
@@ -528,6 +530,7 @@ Consequently, while prompt grounding suffices to stabilise retrieval for mid-siz
 \label{sec:limitations-conclusion}
 % TODO phrase enabling smallest models to correctly perform graph query will be interesting. Balance needs to be found to sacrifice query flexibility and the query validity.
 % TODO real-time ability
+% TODO limitations need to be revised entirely
 The findings are subject to the following limitations.
 First, the scope is narrow: two platforms, one task family (demand-based HVAC controller deployment), and one open-weight model family with a single hosted reference model, whose behaviour can change without notice, so the parity reported here holds for this model version and the evaluated sizes only. The results do not establish the automation of building systems in general.
 Second, the evaluation is offline. Generated configurations are compared with expert-authored ground truth, but they were not executed against the platforms in a closed control loop, so the accuracy reported here is a necessary rather than a sufficient condition for a working controller. The pipeline is also not yet evaluated for real-time use.
@@ -546,7 +549,7 @@ The practical implication is that deployment context derived automatically from 
 This work was supported by xxx under grant xxx.
 
 \section*{Use of generative AI tools declaration}
-During the preparation of this paper, the authors used Claude Science to assist with research planning, drafting, and language editing.
+During the preparation of this paper, the authors used Claude Science (version 0.1.52) to assist with research planning, drafting, and language editing.
 After using this tool, the authors reviewed and edited the content as needed and take full responsibility for the content of the published article.
 
 \bibliography{paper}
